@@ -1,4 +1,4 @@
-const classifyNotice = (text) => {
+const classifyNotice = (text: string): string => {
   const content = text.toLowerCase();
 
   if (

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { format } from "date-fns";
 import {
   Container,
   Typography,
@@ -25,9 +26,10 @@ import {
   User,
   Image as ImageIcon,
   Smile,
+  MessageSquare,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
 import {
   collection,
   addDoc,

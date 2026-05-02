@@ -1,4 +1,4 @@
-const detectPriority = (text) => {
+const detectPriority = (text: string): "High" | "Medium" | "Low" => {
   const content = text.toLowerCase();
 
   if (

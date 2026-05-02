@@ -40,7 +40,11 @@ const departments = [
 
 const years = ["All", "1st", "2nd", "3rd", "4th"];
 
-export default function NoticeForm({ onAdded }) {
+interface NoticeFormProps {
+  onAdded?: () => void;
+}
+
+export default function NoticeForm({ onAdded }: NoticeFormProps) {
   const { user } = useAuth();
 
   const [title, setTitle] = useState("");
@@ -54,7 +58,7 @@ export default function NoticeForm({ onAdded }) {
 
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<File | null>(null);
 
   const [openSnack, setOpenSnack] = useState(false);
 
@@ -72,10 +76,10 @@ export default function NoticeForm({ onAdded }) {
     const fetchUserData = async () => {
       if (user) {
         try {
-          let userSnap;
+          let userSnap: any = null;
 
-          if (user.uid) {
-            const docRef = doc(db, "users", user.uid);
+          if (user.id) {
+            const docRef = doc(db, "users", user.id);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
               userSnap = docSnap.data();
@@ -94,10 +98,14 @@ export default function NoticeForm({ onAdded }) {
           }
 
           if (userSnap) {
-            setUserData(userSnap);
+            setUserData({
+              name: userSnap.name || "",
+              role: userSnap.role || "",
+              department: userSnap.department || "",
+            });
           } else {
             setUserData({
-              name: user.displayName || user.email.split("@")[0],
+              name: user.name || user.email.split("@")[0],
               role: "User",
               department: "Unknown",
             });
@@ -120,8 +128,9 @@ export default function NoticeForm({ onAdded }) {
   }, [title, description]);
 
   // 🚀 Submit Notice
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
     setLoading(true);
 
     try {
@@ -143,11 +152,11 @@ export default function NoticeForm({ onAdded }) {
 
         postedBy:
           userData.name ||
-          user.displayName ||
+          user.name ||
           user.email.split("@")[0],
 
-        role: userData.role || "User",
-        postedByDepartment: userData.department || "Unknown",
+        role: userData.role || user.role || "User",
+        postedByDepartment: userData.department || user.department || "Unknown",
 
         // ✅ PIN ADDED
         pinned: isPinned,
@@ -284,7 +293,7 @@ export default function NoticeForm({ onAdded }) {
               type="file"
               hidden
               accept="image/*"
-              onChange={(e) => setImage(e.target.files[0])}
+              onChange={(e) => setImage(e.target.files ? e.target.files[0] : null)}
             />
           </Button>
 

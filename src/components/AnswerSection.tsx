@@ -1,14 +1,20 @@
-
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
+import { Box, TextField, Button, CircularProgress, alpha, useTheme } from "@mui/material";
+import ReplyIcon from '@mui/icons-material/Reply';
 
-export default function AnswerSection({ queryId }) {
+interface AnswerSectionProps {
+  queryId: string;
+}
+
+export default function AnswerSection({ queryId }: AnswerSectionProps) {
   const [text, setText] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const theme = useTheme();
 
-  const handleReply = async (e) => {
+  const handleReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) return;
     setLoading(true);
@@ -27,23 +33,51 @@ export default function AnswerSection({ queryId }) {
   };
 
   return (
-    <form className="reply-form" onSubmit={handleReply}>
-      <input
+    <Box 
+      component="form" 
+      onSubmit={handleReply} 
+      sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: 1.5, 
+        p: 2, 
+        bgcolor: alpha(theme.palette.primary.main, 0.03), 
+        borderRadius: 3,
+        border: '1px solid',
+        borderColor: 'divider'
+      }}
+    >
+      <TextField
+        size="small"
         placeholder="Your name (optional)"
         value={name}
         onChange={(e) => setName(e.target.value)}
+        variant="outlined"
+        sx={{ bgcolor: 'background.paper', borderRadius: 1 }}
       />
-      <textarea
+      <TextField
+        size="small"
         placeholder="Write your answer..."
+        multiline
+        rows={2}
         value={text}
         onChange={(e) => setText(e.target.value)}
         required
+        variant="outlined"
+        sx={{ bgcolor: 'background.paper', borderRadius: 1 }}
       />
-      <div className="reply-actions">
-        <button type="submit" disabled={loading}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button 
+          type="submit" 
+          variant="contained" 
+          size="small"
+          disabled={loading || !text.trim()}
+          startIcon={loading ? <CircularProgress size={16} /> : <ReplyIcon />}
+          sx={{ fontWeight: 800, borderRadius: 2, px: 3 }}
+        >
           {loading ? "Posting..." : "Post Reply"}
-        </button>
-      </div>
-    </form>
+        </Button>
+      </Box>
+    </Box>
   );
 }

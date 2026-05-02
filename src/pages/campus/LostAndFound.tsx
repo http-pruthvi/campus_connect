@@ -1,16 +1,15 @@
-// src/pages/LostFoundPage.jsx
 import React, { useState } from "react";
 import { Tabs, Tab, Box, Container, Typography, Paper } from "@mui/material";
-import LostItemForm from "../components/LostItemForm";
-import LostItemsList from "../components/LostItemsList";
-import FoundItemForm from "../components/FoundItemForm";
-import FoundItemsList from "../components/FoundItemsList";
-import "../styles/Home.css";
+import LostItemForm from "../../components/LostItemForm";
+import LostItemsList from "../../components/LostItemsList";
+import FoundItemForm from "../../components/FoundItemForm";
+import FoundItemsList from "../../components/FoundItemsList";
+import "../../styles/LostFound.css";
 
-const LostFoundPage = () => {
+const LostAndFound = () => {
   const [tabValue, setTabValue] = useState(0);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -58,4 +57,4 @@ const LostFoundPage = () => {
   );
 };
 
-export default LostFoundPage;
+export default LostAndFound;

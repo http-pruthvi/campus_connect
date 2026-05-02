@@ -32,8 +32,8 @@ import {
   Save,
   Info,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
 import {
   collection,
   query,
@@ -86,6 +86,8 @@ export default function Attendance() {
     "Cloud Computing",
   ];
 
+  const [studentRecords, setStudentRecords] = useState<any[]>([]);
+
   useEffect(() => {
     if (isTeacher) {
       fetchStudents();
@@ -123,6 +125,31 @@ export default function Attendance() {
   };
 
   const fetchStudentAttendance = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const q = query(
+        collection(db, "attendance"),
+        where("department", "==", user.department),
+        where("year", "==", user.year)
+      );
+      const snapshot = await getDocs(q);
+      const records: any[] = [];
+      snapshot.docs.forEach(d => {
+        const data = d.data();
+        if (data.records && data.records[user.id]) {
+          records.push({
+            id: d.id,
+            date: data.date,
+            subject: data.subject,
+            status: data.records[user.id].status,
+          });
+        }
+      });
+      setStudentRecords(records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    } catch (error) {
+      console.error("Error fetching student attendance:", error);
+    }
     setLoading(false);
   };
 
@@ -166,12 +193,113 @@ export default function Attendance() {
   };
 
   if (!isTeacher) {
+    const total = studentRecords.length;
+    const present = studentRecords.filter(r => r.status === "PRESENT").length;
+    const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+
     return (
       <Container maxWidth="lg">
-        <Typography variant="h4" fontWeight={800} gutterBottom>My Attendance</Typography>
-        <Paper sx={{ p: 4, borderRadius: 4, textAlign: 'center' }}>
-          <Typography color="textSecondary">Student attendance tracking UI is being optimized...</Typography>
-        </Paper>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-1px' }}>
+            My Attendance
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Your attendance track record for the current semester
+          </Typography>
+        </Box>
+
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Paper sx={{ p: 4, borderRadius: 4, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography variant="h6" color="textSecondary" gutterBottom>Overall Percentage</Typography>
+              <Typography variant="h2" fontWeight={800} color={percentage < 75 ? 'error.main' : 'primary.main'}>
+                {percentage}%
+              </Typography>
+              <Box sx={{ mt: 2 }}>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={percentage} 
+                  sx={{ height: 8, borderRadius: 4, bgcolor: alpha(theme.palette.divider, 0.1) }} 
+                  color={percentage < 75 ? "error" : "primary"}
+                />
+              </Box>
+              <Typography variant="caption" sx={{ mt: 2, display: 'block', fontWeight: 600 }}>
+                {percentage < 75 ? "⚠️ Below minimum requirement (75%)" : "✅ Meeting requirements"}
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Paper sx={{ p: 4, borderRadius: 4, height: '100%' }}>
+              <Typography variant="h6" fontWeight={800} sx={{ mb: 3 }}>Summary</Typography>
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 6, sm: 3 }}>
+                  <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.primary.main, 0.05), textAlign: 'center' }}>
+                    <Typography variant="h5" fontWeight={800}>{total}</Typography>
+                    <Typography variant="caption" fontWeight={600} color="textSecondary">Total Classes</Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, sm: 3 }}>
+                  <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.success.main, 0.05), textAlign: 'center' }}>
+                    <Typography variant="h5" fontWeight={800} color="success.main">{present}</Typography>
+                    <Typography variant="caption" fontWeight={600} color="textSecondary">Present</Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, sm: 3 }}>
+                  <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.error.main, 0.05), textAlign: 'center' }}>
+                    <Typography variant="h5" fontWeight={800} color="error.main">{studentRecords.filter(r => r.status === "ABSENT").length}</Typography>
+                    <Typography variant="caption" fontWeight={600} color="textSecondary">Absent</Typography>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 6, sm: 3 }}>
+                  <Box sx={{ p: 2, borderRadius: 3, bgcolor: alpha(theme.palette.warning.main, 0.05), textAlign: 'center' }}>
+                    <Typography variant="h5" fontWeight={800} color="warning.main">{studentRecords.filter(r => r.status === "LATE").length}</Typography>
+                    <Typography variant="caption" fontWeight={600} color="textSecondary">Late</Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        <TableContainer component={Paper} sx={{ borderRadius: 4 }}>
+          {loading && <LinearProgress />}
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.02) }}>
+                <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700 }}>Status</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {studentRecords.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={3} align="center" sx={{ py: 8 }}>
+                    <Typography color="textSecondary">No attendance records found yet.</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                studentRecords.map((record) => (
+                  <TableRow key={record.id} hover>
+                    <TableCell sx={{ fontWeight: 600 }}>{format(new Date(record.date), "MMM do, yyyy")}</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>{record.subject}</TableCell>
+                    <TableCell align="right">
+                      <Chip 
+                        label={record.status} 
+                        size="small" 
+                        sx={{ 
+                          fontWeight: 800,
+                          bgcolor: alpha(getStatusColor(record.status), 0.1),
+                          color: getStatusColor(record.status)
+                        }} 
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Container>
     );
   }

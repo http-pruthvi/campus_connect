@@ -9,11 +9,15 @@ import {
   MenuItem, 
   Paper, 
   Typography, 
-  Grid,
+  Grid2 as Grid,
   CircularProgress
 } from "@mui/material";
 
-export default function EventForm({ onAdded }) {
+interface EventFormProps {
+  onAdded?: () => void;
+}
+
+export default function EventForm({ onAdded }: EventFormProps) {
   const { user } = useAuth();
   
   const [title, setTitle] = useState("");
@@ -24,7 +28,7 @@ export default function EventForm({ onAdded }) {
   const [location, setLocation] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !description || !date || !time || !location) {
       alert("Please fill all required fields");
@@ -71,7 +75,7 @@ export default function EventForm({ onAdded }) {
       
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Event Title"
@@ -81,7 +85,7 @@ export default function EventForm({ onAdded }) {
             />
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               select
               fullWidth
@@ -97,7 +101,7 @@ export default function EventForm({ onAdded }) {
             </TextField>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               type="date"
@@ -109,7 +113,7 @@ export default function EventForm({ onAdded }) {
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               type="time"
@@ -121,7 +125,7 @@ export default function EventForm({ onAdded }) {
             />
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <TextField
               fullWidth
               label="Location"
@@ -131,7 +135,7 @@ export default function EventForm({ onAdded }) {
             />
           </Grid>
 
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               multiline
@@ -143,7 +147,7 @@ export default function EventForm({ onAdded }) {
             />
           </Grid>
 
-          <Grid item xs={12} display="flex" justifyContent="flex-end">
+          <Grid size={{ xs: 12 }} display="flex" justifyContent="flex-end">
             <Button 
               type="submit" 
               variant="contained" 

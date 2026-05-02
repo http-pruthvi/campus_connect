@@ -3,7 +3,7 @@
  * Analyzes text and returns suggested categories based on keywords.
  */
 
-const CATEGORY_MAP = {
+const CATEGORY_MAP: Record<string, string[]> = {
   "Placement & Careers": ["job", "interview", "resume", "placement", "career", "salary", "company", "internship"],
   "Academics": ["exam", "syllabus", "assignment", "grades", "marks", "professor", "lecture", "notes", "study"],
   "Extracurricular": ["sports", "dance", "music", "club", "competition", "festival", "event"],
@@ -11,11 +11,11 @@ const CATEGORY_MAP = {
   "Campus Life": ["hostel", "canteen", "food", "library", "gym", "transport", "bus"]
 };
 
-export const suggestCategory = (title, description) => {
+export const suggestCategory = (title: string, description: string): string => {
   const text = `${title} ${description}`.toLowerCase();
   
   // Count keyword matches for each category
-  const scores = {};
+  const scores: Record<string, number> = {};
   
   for (const [category, keywords] of Object.entries(CATEGORY_MAP)) {
     scores[category] = 0;

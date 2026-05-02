@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth, User } from "../context/AuthContext";
+import { CircularProgress, Box } from "@mui/material";
 
 interface ProtectedRouteProps {
   allowedRoles?: User["role"][];
@@ -14,7 +15,7 @@ export default function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return <Navigate to="/" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && !allowedRoles.map(r => r.toUpperCase()).includes(user.role.toUpperCase())) {
     return <Navigate to="/home" replace />;
   }
 

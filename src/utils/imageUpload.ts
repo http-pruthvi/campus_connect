@@ -3,7 +3,7 @@
  * @param {File} file - The image file to upload
  * @returns {Promise<string>} - The URL of the uploaded image
  */
-export const uploadImageToImgBB = async (file) => {
+export const uploadImageToImgBB = async (file: File): Promise<string> => {
   if (!file) return "";
   
   const IMGBB_API_KEY = "3762ab13c55ff6c4cfba5b63dba662dd";

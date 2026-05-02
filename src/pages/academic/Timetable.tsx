@@ -40,8 +40,8 @@ import {
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
 import {
   doc,
   setDoc,

@@ -9,25 +9,45 @@ import {
   arrayUnion,
   deleteDoc
 } from "firebase/firestore";
-import { db } from "../firebase";
-import { useAuth } from "../context/AuthContext";
-import EventForm from "../components/EventForm";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
+import EventForm from "../../components/EventForm";
 import {
-  Container, Typography, Grid, Paper, Box, Button, Chip, Dialog,
+  Container, Typography, Paper, Box, Button, Chip, Dialog,
   DialogTitle, DialogContent, DialogActions, CircularProgress,
   List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider,
   TextField, MenuItem
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import EventIcon from "@mui/icons-material/Event";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import PersonIcon from "@mui/icons-material/Person";
 import GroupIcon from "@mui/icons-material/Group";
 
+interface Registration {
+  id: string;
+  name: string;
+  email: string;
+  registeredAt: string;
+}
+
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  category: string;
+  registrations?: Registration[];
+  timestamp?: any;
+}
+
 export default function Events() {
   const { user } = useAuth();
-  const [events, setEvents] = useState([]);
-  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Filter State
@@ -35,15 +55,15 @@ export default function Events() {
 
   // RSVP Dialog State
   const [openRsvp, setOpenRsvp] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
 
   // View Registrations Dialog State
   const [openViewReg, setOpenViewReg] = useState(false);
-  const [viewEvent, setViewEvent] = useState(null);
+  const [viewEvent, setViewEvent] = useState<Event | null>(null);
 
   const role = user?.role?.trim().toUpperCase();
-  const canEdit = ["ADMIN", "HOD", "TEACHER"].includes(role);
+  const canEdit = ["ADMIN", "HOD", "TEACHER"].includes(role || "");
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -54,7 +74,7 @@ export default function Events() {
       const data = snapshot.docs.map((d) => ({
         id: d.id,
         ...d.data(),
-      }));
+      } as Event));
       
       setEvents(data);
       setFilteredEvents(data);
@@ -77,7 +97,7 @@ export default function Events() {
     }
   }, [selectedCategory, events]);
 
-  const handleOpenRsvp = (event) => {
+  const handleOpenRsvp = (event: Event) => {
     // If user is already in the registrations array, do nothing
     const isRegistered = event.registrations?.some(reg => reg.id === user?.id) || false;
     if (isRegistered) return;
@@ -92,7 +112,7 @@ export default function Events() {
 
     try {
       const eventRef = doc(db, "events", selectedEvent.id);
-      const studentData = {
+      const studentData: Registration = {
         id: user.id,
         name: user.name || "Unknown Student",
         email: user.email || "No Email",
@@ -114,12 +134,12 @@ export default function Events() {
     setRsvpLoading(false);
   };
 
-  const handleViewRegistrations = (event) => {
+  const handleViewRegistrations = (event: Event) => {
     setViewEvent(event);
     setOpenViewReg(true);
   };
 
-  const handleDeleteEvent = async (id) => {
+  const handleDeleteEvent = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
     try {
       await deleteDoc(doc(db, "events", id));
@@ -129,7 +149,7 @@ export default function Events() {
     }
   };
 
-  const getCategoryColor = (category) => {
+  const getCategoryColor = (category: string): "primary" | "secondary" | "success" | "warning" | "info" | "default" => {
     switch (category) {
       case "Technical": return "primary";
       case "Cultural": return "secondary";
@@ -186,7 +206,7 @@ export default function Events() {
             const regCount = event.registrations?.length || 0;
 
             return (
-              <Grid item xs={12} md={6} key={event.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={event.id}>
                 <Paper className={`slide-up delay-${(index % 4) + 1}`} sx={{ p: 3, borderRadius: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.1)', height: "100%", display: "flex", flexDirection: "column", transition: 'transform 0.3s ease, box-shadow 0.3s ease', '&:hover': { transform: 'translateY(-8px)', boxShadow: '0 12px 30px rgba(0,0,0,0.1)' } }}>
                   <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Typography variant="h6" fontWeight="bold">
@@ -287,22 +307,22 @@ export default function Events() {
             </Typography>
           ) : (
             <List>
-              {viewEvent.registrations.map((student, idx) => (
-                <React.Fragment key={student.id + idx}>
-                  <ListItem>
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        <PersonIcon />
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText 
-                      primary={student.name} 
-                      secondary={student.email} 
-                    />
-                  </ListItem>
-                  {idx < viewEvent.registrations.length - 1 && <Divider variant="inset" component="li" />}
-                </React.Fragment>
-              ))}
+                {viewEvent?.registrations?.map((student, idx) => (
+                  <React.Fragment key={student.id + idx}>
+                    <ListItem>
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          <PersonIcon />
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={student.name} 
+                        secondary={student.email} 
+                      />
+                    </ListItem>
+                    {idx < (viewEvent?.registrations?.length || 0) - 1 && <Divider variant="inset" component="li" />}
+                  </React.Fragment>
+                ))}
             </List>
           )}
         </DialogContent>

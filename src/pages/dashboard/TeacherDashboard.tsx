@@ -22,8 +22,8 @@ import {
   Clock,
   MoreVertical,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
 import {
   collection,
   query,
@@ -61,22 +61,30 @@ export default function TeacherDashboard() {
     { name: "Fri", score: 90 },
   ];
 
-  const StatCard = ({ title, value, icon: Icon, color, trend }: any) => (
-    <Paper sx={{ p: 3, borderRadius: 4, height: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: alpha(color, 0.1), color: color }}>
-          <Icon size={24} />
-        </Box>
-        <Chip 
-          label={trend} 
-          size="small" 
-          sx={{ fontWeight: 700, bgcolor: alpha(theme.palette.success.main, 0.1), color: theme.palette.success.main, height: 24 }} 
-        />
+  interface StatCardProps {
+  title: string;
+  value: number | string;
+  icon: React.ElementType;
+  color: string;
+  trend: string;
+}
+
+const StatCard = ({ title, value, icon: Icon, color, trend }: StatCardProps) => (
+  <Paper sx={{ p: 3, borderRadius: 4, height: '100%' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: alpha(color, 0.1), color: color }}>
+        <Icon size={24} />
       </Box>
-      <Typography variant="h4" fontWeight={800} gutterBottom>{value}</Typography>
-      <Typography variant="body2" color="textSecondary" fontWeight={600}>{title}</Typography>
-    </Paper>
-  );
+      <Chip 
+        label={trend} 
+        size="small" 
+        sx={{ fontWeight: 700, bgcolor: alpha(theme.palette.success.main, 0.1), color: theme.palette.success.main, height: 24 }} 
+      />
+    </Box>
+    <Typography variant="h4" fontWeight={800} gutterBottom>{value}</Typography>
+    <Typography variant="body2" color="textSecondary" fontWeight={600}>{title}</Typography>
+  </Paper>
+);
 
   return (
     <Container maxWidth="lg">

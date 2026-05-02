@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import emailjs from "emailjs-com";
 import {
-  Container, Typography, Grid, Paper, Box, TextField,
+  Container, Typography, Grid2 as Grid, Paper, Box, TextField,
   Select, MenuItem, Button, Tabs, Tab, Dialog,
   DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Avatar, InputAdornment
 } from "@mui/material";
 import PersonIcon from '@mui/icons-material/Person';
 import SearchIcon from "@mui/icons-material/Search";
-import "../styles/TeacherDashboard.css";
+import "../../../styles/TeacherDashboard.css";
 
 function TabPanel({ children, value, index }: any) {
   return <div hidden={value !== index}>{value === index && <Box sx={{ mt: 2 }}>{children}</Box>}</div>;
@@ -76,7 +76,7 @@ export default function TeacherUserManagement() {
 
   // Add Student
   const handleAddStudent = async () => {
-    if (!form.name || !form.email || !form.year)
+    if (!form.name || !form.email || !form.year || !user)
       return alert("All fields required");
 
     const password = Math.random().toString(36).slice(-8);
@@ -134,7 +134,7 @@ export default function TeacherUserManagement() {
     }
   };
 
-  const handleTabChange = (e, newValue) => {
+  const handleTabChange = (e: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
     setYearFilter("");
   };

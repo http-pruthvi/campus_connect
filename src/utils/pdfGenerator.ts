@@ -1,8 +1,37 @@
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { UserOptions } from "jspdf-autotable";
 
-export const generateReceiptPDF = (transaction, user, feeRecord) => {
-  const doc = new jsPDF();
+// Augment jsPDF type to include lastAutoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
+interface Transaction {
+  id: string;
+  type: string;
+  amount: number;
+  date: any;
+  referenceNumber?: string;
+  paymentMethod?: string;
+}
+
+interface User {
+  name: string;
+  email: string;
+  department: string;
+  year: string;
+}
+
+interface FeeRecord {
+  totalFees: number;
+  paidFees: number;
+  remainingFees: number;
+}
+
+export const generateReceiptPDF = (transaction: Transaction, user: User, feeRecord: FeeRecord) => {
+  const doc = new jsPDF() as jsPDFWithAutoTable;
   
   // Set fonts and colors
   doc.setFont("helvetica");
@@ -39,11 +68,13 @@ export const generateReceiptPDF = (transaction, user, feeRecord) => {
   doc.setFont("helvetica", "bold");
   doc.text("Receipt Information", 120, 45);
   
+  const transactionDate = transaction?.date?.toDate ? transaction.date.toDate() : new Date(transaction?.date);
+  
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(`Receipt No: ${transaction?.referenceNumber || `TXN-${transaction?.id}`}`, 120, 52);
-  doc.text(`Date: ${new Date(transaction?.date).toLocaleDateString()}`, 120, 58);
-  doc.text(`Time: ${new Date(transaction?.date).toLocaleTimeString()}`, 120, 64);
+  doc.text(`Date: ${transactionDate.toLocaleDateString()}`, 120, 58);
+  doc.text(`Time: ${transactionDate.toLocaleTimeString()}`, 120, 64);
   doc.text(`Payment Method: ${transaction?.paymentMethod || "Cash"}`, 120, 70);
   
   // Transaction Table
@@ -67,9 +98,9 @@ export const generateReceiptPDF = (transaction, user, feeRecord) => {
       1: { cellWidth: 60 },
       2: { cellWidth: "auto", halign: "right" }
     }
-  });
+  } as UserOptions);
   
-  const finalY = doc.lastAutoTable.finalY + 15;
+  const finalY = (doc.lastAutoTable?.finalY || 120) + 15;
   
   // Account Summary
   doc.setFontSize(11);

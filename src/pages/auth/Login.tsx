@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -9,12 +9,12 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import "../styles/globals.css";
-import "../styles/Login.css";
+import "../../styles/globals.css";
+import "../../styles/Login.css";
 
-import { auth, signInWithEmailAndPassword } from "../firebase";
+import { auth, signInWithEmailAndPassword } from "../../firebase";
 
 export default function Login() {
   const { setUser } = useAuth();
@@ -25,6 +25,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate("/home");
+    }
+  }, [user, authLoading, navigate]);
 
 const handleLogin = async () => {
   setError("");

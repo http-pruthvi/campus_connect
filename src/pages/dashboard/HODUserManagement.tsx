@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import emailjs from "emailjs-com";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import {
-  Container, Typography, Grid, Paper, Box, TextField, Select, MenuItem,
+  Container, Typography, Grid2 as Grid, Paper, Box, TextField, Select, MenuItem,
   Button, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions,
   FormControlLabel, Switch, Avatar, InputAdornment, Chip, Divider
 } from "@mui/material";
@@ -12,9 +12,38 @@ import PersonIcon from '@mui/icons-material/Person';
 import SearchIcon from "@mui/icons-material/Search";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import "../styles/HODDashboard.css";
+import "../../../styles/HODDashboard.css";
 
-function TabPanel({ children, value, index }: any) {
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  department: string;
+  year?: string;
+  approved: boolean;
+}
+
+interface Fee {
+  id: string;
+  totalFees: number;
+  paidFees: number;
+  remainingFees: number;
+  status: string;
+  user: {
+    id: string;
+    department: string;
+  };
+}
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index } = props;
   return (
     <div hidden={value !== index}>
       {value === index && <Box sx={{ mt: 2 }}>{children}</Box>}
@@ -24,15 +53,15 @@ function TabPanel({ children, value, index }: any) {
 
 export default function HodUserManagement() {
   const { user } = useAuth();
-  const [users, setUsers] = useState<any[]>([]);
-  const [fees, setFees] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [fees, setFees] = useState<Fee[]>([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", email: "", role: "STUDENT", year: "" });
   const [tabIndex, setTabIndex] = useState(0);
-  const [editUser, setEditUser] = useState<any>(null);
+  const [editUser, setEditUser] = useState<User | null>(null);
 
   // Fee state
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [feeForm, setFeeForm] = useState({ totalFees: "", paidFees: "" });
@@ -46,8 +75,8 @@ export default function HodUserManagement() {
         getDocs(collection(db, "fees"))
       ]);
       
-      const usersList = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      const feesList = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const usersList = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[];
+      const feesList = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Fee[];
       
       setUsers(usersList);
       setFees(feesList);
@@ -65,7 +94,7 @@ export default function HodUserManagement() {
   };
 
   const handleAddUser = async () => {
-    if (!form.name || !form.email) return alert("Fields missing");
+    if (!form.name || !form.email || !user?.department) return alert("Fields missing");
     const password = Math.random().toString(36).slice(-8);
     try {
       await addDoc(collection(db, "users"), { ...form, department: user.department, password, approved: false });
@@ -76,9 +105,10 @@ export default function HodUserManagement() {
   };
 
   const handleUpdate = async () => {
+    if (!editUser) return;
     try { 
       const { id, ...userData } = editUser;
-      await updateDoc(doc(db, "users", id), userData); 
+      await updateDoc(doc(db, "users", id), userData as any); 
       setEditUser(null); 
       fetchData(); 
     } catch (e) { console.error(e); }
@@ -95,6 +125,7 @@ export default function HodUserManagement() {
   };
 
   const handleAssignFee = async () => {
+    if (!selectedStudent) return;
     try {
       const total = Number(feeForm.totalFees);
       const paid = Number(feeForm.paidFees) || 0;
@@ -111,8 +142,10 @@ export default function HodUserManagement() {
   };
 
   const handleLogPayment = async () => {
+    if (!selectedStudent) return;
     try {
       const rec = fees.find(f => f.user?.id === selectedStudent.id);
+      if (!rec) return;
       const paid = Number(rec.paidFees) + Number(feeForm.paidFees);
       await updateDoc(doc(db, "fees", rec.id), { 
         ...rec, 
@@ -125,7 +158,7 @@ export default function HodUserManagement() {
     } catch (e) { alert("Error"); }
   };
 
-  const getFee = (id) => fees.find(f => f.user?.id === id);
+  const getFee = (id: string) => fees.find(f => f.user?.id === id);
 
   const tabs = ["Students", "Teachers", "Pending Approvals", "Fees Management"];
   const filteredData = [
@@ -142,17 +175,17 @@ export default function HodUserManagement() {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={tabIndex === 3 ? 12 : 4}>
+        <Grid size={{ xs: 12, md: tabIndex === 3 ? 12 : 4 }}>
           {tabIndex !== 3 ? (
             <Paper sx={{ p: 3, borderRadius: '15px' }} elevation={4}>
               <Typography variant="h6" fontWeight="bold" gutterBottom>Add User</Typography>
               <TextField label="Name" fullWidth sx={{ mb: 2 }} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
               <TextField label="Email" fullWidth sx={{ mb: 2 }} value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
-              <Select fullWidth sx={{ mb: 2 }} value={form.role} onChange={e=>setForm({...form,role:e.target.value})}>
+              <Select fullWidth sx={{ mb: 2 }} value={form.role} onChange={e=>setForm({...form,role:e.target.value as string})}>
                 <MenuItem value="STUDENT">Student</MenuItem><MenuItem value="TEACHER">Teacher</MenuItem>
               </Select>
               {form.role === "STUDENT" && (
-                <Select fullWidth sx={{ mb: 2 }} value={form.year} onChange={e=>setForm({...form,year:e.target.value})} displayEmpty>
+                <Select fullWidth sx={{ mb: 2 }} value={form.year} onChange={e=>setForm({...form,year:e.target.value as string})} displayEmpty>
                   <MenuItem value="" disabled>Select Year</MenuItem><MenuItem value="1">1st Year</MenuItem><MenuItem value="2">2nd Year</MenuItem>
                 </Select>
               )}
@@ -162,19 +195,19 @@ export default function HodUserManagement() {
             <Box sx={{ mb: 4, display: 'flex', gap: 2 }}>
                 <Paper sx={{ p: 2, flex: 1, borderLeft: '5px solid #4F46E5' }}>
                   <Typography variant="caption">Total Expected</Typography>
-                  <Typography variant="h6">₹{fees.filter(f=>f.user?.department===user.department).reduce((a,b)=>a+b.totalFees,0).toLocaleString()}</Typography>
+                  <Typography variant="h6">₹{fees.filter(f=>f.user?.department===user?.department).reduce((a,b)=>a+b.totalFees,0).toLocaleString()}</Typography>
                 </Paper>
                 <Paper sx={{ p: 2, flex: 1, borderLeft: '5px solid #10B981' }}>
                   <Typography variant="caption">Collected</Typography>
-                  <Typography variant="h6">₹{fees.filter(f=>f.user?.department===user.department).reduce((a,b)=>a+b.paidFees,0).toLocaleString()}</Typography>
+                  <Typography variant="h6">₹{fees.filter(f=>f.user?.department===user?.department).reduce((a,b)=>a+b.paidFees,0).toLocaleString()}</Typography>
                 </Paper>
             </Box>
           )}
         </Grid>
 
-        <Grid item xs={12} md={tabIndex === 3 ? 12 : 8}>
+        <Grid size={{ xs: 12, md: tabIndex === 3 ? 12 : 8 }}>
           <Paper sx={{ p: 2, borderRadius: '15px' }} elevation={8}>
-            <Tabs value={tabIndex} onChange={(e,v)=>setTabIndex(v)} variant="fullWidth" sx={{ '& .MuiTabs-flexContainer': { gap: 2 } }}>
+            <Tabs value={tabIndex} onChange={(e: React.SyntheticEvent, v: number)=>setTabIndex(v)} variant="fullWidth" sx={{ '& .MuiTabs-flexContainer': { gap: 2 } }}>
               {tabs.map((t,i)=><Tab key={i} label={t} sx={{fontWeight:'bold'}}/>)}
             </Tabs>
             <TextField fullWidth size="small" placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} sx={{ my: 2 }} />
@@ -184,7 +217,7 @@ export default function HodUserManagement() {
                 {filteredData[tabIndex].filter(u => u.name?.toLowerCase().includes(search.toLowerCase())).map(u => {
                   const fr = getFee(u.id);
                   return (
-                    <Grid item xs={12} sm={6} md={4} key={u.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={u.id}>
                       <Paper sx={{ p: 2, borderRadius: '12px', borderTop: `4px solid ${tabIndex===3 ? (fr?(fr.status==='Paid'?'#10B981':'#F59E0B'):'#94A3B8') : (u.approved?'#16a34a':'#2563EB')}` }}>
                         <Typography fontWeight="bold">{highlight(u.name, search)}</Typography>
                         <Typography variant="caption" color="textSecondary">{u.email}</Typography>
@@ -225,7 +258,7 @@ export default function HodUserManagement() {
       <Dialog open={!!editUser} onClose={()=>setEditUser(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Edit User</DialogTitle>
         <DialogContent>
-          {editUser && ["name","email"].map(f => <TextField key={f} label={f} fullWidth sx={{mt:2}} value={editUser[f]||""} onChange={e=>setEditUser({...editUser,[f]:e.target.value})}/>)}
+          {editUser && (["name","email"] as const).map(f => <TextField key={f} label={f.charAt(0).toUpperCase() + f.slice(1)} fullWidth sx={{mt:2}} value={editUser[f]||""} onChange={e=>setEditUser({...editUser,[f]:e.target.value})}/>)}
         </DialogContent>
         <DialogActions><Button onClick={()=>setEditUser(null)}>Cancel</Button><Button variant="contained" onClick={handleUpdate}>Save</Button></DialogActions>
       </Dialog>

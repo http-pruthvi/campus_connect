@@ -1,10 +1,7 @@
-// firebase.js
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, signInWithEmailAndPassword } from "firebase/auth";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { signInWithEmailAndPassword } from "firebase/auth";
 
 // Firebase config
 const firebaseConfig = {
@@ -24,14 +21,15 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const provider = new GoogleAuthProvider();
 
-// Firestore
-export const db = getFirestore(app);
+// Firestore with persistence
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
+
+export const storage = getStorage(app);
 
 // Login & Logout functions
 export const login = () => signInWithPopup(auth, provider);
 export const logout = () => signOut(auth);
-
-
-export const storage = getStorage(app);
 
 export { signInWithEmailAndPassword };

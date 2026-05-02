@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase";
-import { Paper, Typography, TextField, Button, Grid, CircularProgress, Box } from "@mui/material";
+import { Paper, Typography, TextField, Button, Grid2 as Grid, CircularProgress, Box } from "@mui/material";
 import { uploadImageToImgBB } from "../utils/imageUpload";
 
 const FoundItemForm = () => {
@@ -9,10 +9,10 @@ const FoundItemForm = () => {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [location, setLocation] = useState("");
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
@@ -55,7 +55,7 @@ const FoundItemForm = () => {
       </Typography>
       <form onSubmit={handleSubmit}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Title"
@@ -65,7 +65,7 @@ const FoundItemForm = () => {
               required
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label="Category (phone, wallet, keys...)"
@@ -75,7 +75,7 @@ const FoundItemForm = () => {
               required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Location where you found it"
@@ -85,7 +85,7 @@ const FoundItemForm = () => {
               required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <TextField
               fullWidth
               label="Description"
@@ -97,17 +97,17 @@ const FoundItemForm = () => {
               required
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Box sx={{ border: '1px dashed #cbd5e1', p: 2, borderRadius: 2, textAlign: 'center' }}>
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => setImage(e.target.files[0])}
+                onChange={(e) => setImage(e.target.files?.[0] || null)}
                 style={{ width: '100%' }}
               />
             </Box>
           </Grid>
-          <Grid item xs={12}>
+          <Grid size={{ xs: 12 }}>
             <Button
               type="submit"
               variant="contained"

@@ -30,8 +30,8 @@ import {
   Clock,
   Users,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db, storage } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db, storage } from "../../firebase";
 import {
   collection,
   addDoc,
@@ -355,6 +355,59 @@ export default function Assignments() {
           <Button variant="contained" onClick={handleSubmitAssignment} disabled={!file || submitting}>
             {submitting ? "Uploading..." : "Submit"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* View Submissions Dialog */}
+      <Dialog open={openViewSubmissions} onClose={() => setOpenViewSubmissions(false)} fullWidth maxWidth="md">
+        <DialogTitle sx={{ fontWeight: 800, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Submissions for {selectedAssignment?.title}
+          <Chip label={`${submissions.length} Total`} size="small" color="primary" />
+        </DialogTitle>
+        <DialogContent dividers>
+          {submissions.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center' }}>
+              <Typography color="textSecondary">No submissions received yet.</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {submissions.map((sub) => (
+                <Paper key={sub.id} variant="outlined" sx={{ p: 2, borderRadius: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                      {sub.studentName?.charAt(0)}
+                    </Avatar>
+                    <Box>
+                      <Typography fontWeight={700}>{sub.studentName}</Typography>
+                      <Typography variant="caption" color="textSecondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <FileText size={12} /> {sub.fileName}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Chip 
+                      label={sub.status} 
+                      size="small" 
+                      color={sub.status === 'REVIEWED' ? 'success' : 'warning'} 
+                      sx={{ fontWeight: 700, fontSize: '0.65rem' }} 
+                    />
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      href={sub.fileUrl} 
+                      target="_blank"
+                      startIcon={<FileText size={14} />}
+                    >
+                      View
+                    </Button>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setOpenViewSubmissions(false)} variant="contained">Close</Button>
         </DialogActions>
       </Dialog>
     </Container>

@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { db } from "./firebase";
+import { db } from "../../firebase";
 import { collection, getDocs, addDoc, updateDoc, doc, query, where } from "firebase/firestore";
-import { useAuth } from "./context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import {
   Container, Typography, Box, TextField, Select, MenuItem,
-  Button, Grid, Paper, Avatar, Dialog, DialogTitle, DialogContent, 
+  Button, Grid2 as Grid, Paper, Avatar, Dialog, DialogTitle, DialogContent, 
   DialogActions, InputAdornment, Chip, Divider, Tabs, Tab,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip, Switch
 } from "@mui/material";
@@ -12,7 +12,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import PersonIcon from '@mui/icons-material/Person';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import "./styles/TeacherDashboard.css";
+import "../../styles/TeacherDashboard.css";
 
 function TabPanel({ children, value, index }: any) {
   return (
@@ -211,7 +211,7 @@ export default function FinancePanel() {
           { label: "Collected", val: totalCollected, col: "#10B981" },
           { label: "Outstanding", val: totalPending, col: "#F43F5E" }
         ].map((stat, idx) => (
-          <Grid item xs={12} md={4} key={idx}>
+          <Grid size={{ xs: 12, md: 4 }} key={idx}>
             <Paper sx={{ p: 3, borderRadius: '15px', borderLeft: `6px solid ${stat.col}` }}>
               <Typography variant="body2" color="textSecondary">{stat.label}</Typography>
               <Typography variant="h5" fontWeight="bold">₹{stat.val.toLocaleString()}</Typography>
@@ -221,7 +221,7 @@ export default function FinancePanel() {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid size={12}>
           <Paper sx={{ p: 2 }}>
             <Box display="flex" flexWrap="wrap" justifyContent="space-between" alignItems="center" mb={3} gap={2}>
               <Tabs value={tabIndex} onChange={(e, n) => setTabIndex(n)} sx={{ '& .MuiTabs-flexContainer': { gap: 2 } }}>
@@ -295,13 +295,13 @@ export default function FinancePanel() {
                               {!r ? (
                                 <Button variant="contained" size="small" sx={{ whiteSpace: 'nowrap', minWidth: '70px' }} onClick={()=>{
                                   setSelectedStudent(s);
-                                  setFeeForm({ tuitionFee: "", libraryFee: "", hostelFee: "", examFee: "", semester: "Semester 1", paidFees: 0, paymentMethod: "Cash", referenceNumber: "" });
+                                  setFeeForm({ totalFees: "", tuitionFee: "", libraryFee: "", hostelFee: "", examFee: "", semester: "Semester 1", paidFees: "", paymentMethod: "Cash", referenceNumber: "" });
                                   setIsAssignModalOpen(true);
                                 }}>Assign</Button>
                               ) : r.status !== 'Paid' ? (
                                 <Button variant="outlined" size="small" sx={{ whiteSpace: 'nowrap', minWidth: '70px' }} onClick={()=>{
                                   setSelectedStudent(s);
-                                  setFeeForm(prev => ({ ...prev, paidFees: 0, paymentMethod: "Cash", referenceNumber: "" }));
+                                  setFeeForm(prev => ({ ...prev, totalFees: prev.totalFees, paidFees: "", paymentMethod: "Cash", referenceNumber: "" }));
                                   setIsPayModalOpen(true);
                                 }}>Pay</Button>
                               ) : (
@@ -450,7 +450,7 @@ export default function FinancePanel() {
         <DialogContent sx={{ mt: 2, p: 3, bgcolor: '#f1f5f9' }}>
           {selectedStudent && (
             <Grid container spacing={3}>
-              <Grid item xs={12} md={5}>
+              <Grid size={{ xs: 12, md: 5 }}>
                 <Paper sx={{ p: 3, borderRadius: '15px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#1e293b' }}>Profile</Typography>
                   <Typography variant="body2" sx={{ mb: 1.5, color: '#475569' }}><strong style={{ color: '#1e293b' }}>Email:</strong> {selectedStudent.email}</Typography>
@@ -474,7 +474,7 @@ export default function FinancePanel() {
                   })()}
                 </Paper>
               </Grid>
-              <Grid item xs={12} md={7}>
+              <Grid size={{ xs: 12, md: 7 }}>
                 <Paper sx={{ p: 3, borderRadius: '15px', height: '100%', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)' }}>
                   <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: '#1e293b' }}>Transaction History</Typography>
                   {studentTransactions.length > 0 ? (

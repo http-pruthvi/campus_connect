@@ -1,8 +1,12 @@
+interface NotificationToastProps {
+  toast: {
+    type: string;
+    message: string;
+  } | null;
+  onClose: () => void;
+}
 
-import React from "react";
-import "../styles/queries.css";
-
-export default function NotificationToast({ toast, onClose }) {
+export default function NotificationToast({ toast, onClose }: NotificationToastProps) {
   if (!toast) return null;
   return (
     <div className="toast-wrapper" role="status" aria-live="polite" onClick={onClose}>

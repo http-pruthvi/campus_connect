@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from "../../context/AuthContext";
 import {
   Container,
   Typography,
@@ -13,11 +14,11 @@ import {
   Step,
   StepLabel,
 } from "@mui/material";
-import { auth, db } from "../firebase";
+import { auth, db } from "../../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { useNavigate, Link } from "react-router-dom";
-import "../styles/Login.css";
+import "../../styles/Login.css";
 
 const steps = ["Account Details", "Profile Information"];
 
@@ -36,6 +37,13 @@ export default function Register() {
   const [year, setYear] = useState("");
 
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate("/home");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleNext = () => {
     if (activeStep === 0) {

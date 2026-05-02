@@ -33,8 +33,8 @@ import {
   Download,
   Plus,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
-import { db } from "../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { db } from "../../firebase";
 import {
   collection,
   query,

@@ -7,36 +7,41 @@ import { useState, useMemo, useEffect } from "react";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import MainLayout from "./components/MainLayout";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
 import Home from "./pages/Home";
 
-// Pages
-import NoticeBoard from "./pages/NoticeBoard";
-import LostFoundPage from "./pages/LostAndFound";
-import QueriesPage from "./pages/QueriesPage";
-import Events from "./pages/Events";
-import Attendance from "./pages/Attendance";
-import Assignments from "./pages/Assignments";
-import Grades from "./pages/Grades";
-import Timetable from "./pages/Timetable";
-import Chat from "./pages/Chat";
+// Academic
+import Attendance from "./pages/academic/Attendance";
+import Timetable from "./pages/academic/Timetable";
+import Assignments from "./pages/academic/Assignments";
+import Grades from "./pages/academic/Grades";
+import NoticeBoard from "./pages/academic/NoticeBoard";
+
+// Campus
+import LostAndFound from "./pages/campus/LostAndFound";
+import Events from "./pages/campus/Events";
+import FinancePanel from "./pages/campus/FinancePanel";
+
+// Support
+import Chat from "./pages/support/Chat";
+import QueriesPage from "./pages/support/QueriesPage";
+import Mentorship from "./pages/support/Mentorship";
 
 // Admin
-import AdminDashboard from "./pages/AdminDashboard";
-import AdminUserManagement from "./pages/AdminUserManagement";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import AdminUserManagement from "./pages/dashboard/AdminUserManagement";
 
 // HOD
-import HodDashboard from "./pages/HodDashboard";
-import HODUserManagement from "./pages/HODUserManagement";
+import HodDashboard from "./pages/dashboard/HodDashboard";
+import HODUserManagement from "./pages/dashboard/HODUserManagement";
 
 // Teacher
-import TeacherDashboard from "./pages/TeacherDashboard";
-import TeacherUserManagement from "./pages/TeacherUserManagement";
-import FinancePanel from "./FinancePanel";
+import TeacherDashboard from "./pages/dashboard/TeacherDashboard";
+import TeacherUserManagement from "./pages/dashboard/TeacherUserManagement";
 
 // Student
-import StudentDashboard from "./pages/StudentDashboard";
+import StudentDashboard from "./pages/dashboard/StudentDashboard";
 
 export default function App() {
   const [mode, setMode] = useState<'light' | 'dark'>(
@@ -71,7 +76,7 @@ export default function App() {
                 <Route element={<ProtectedRoute allowedRoles={["ADMIN", "HOD", "TEACHER", "STUDENT"]} />}>
                   <Route path="/events" element={<Events />} />
                   <Route path="/notices" element={<NoticeBoard />} />
-                  <Route path="/lostfound" element={<LostFoundPage />} />
+                  <Route path="/lostfound" element={<LostAndFound />} />
                   <Route path="/queries" element={<QueriesPage />} />
                   
                   {/* New Features */}
@@ -80,6 +85,7 @@ export default function App() {
                   <Route path="/assignments" element={<Assignments />} />
                   <Route path="/grades" element={<Grades />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/mentorship" element={<Mentorship />} />
                 </Route>
 
                 {/* ================= ADMIN ================= */}
