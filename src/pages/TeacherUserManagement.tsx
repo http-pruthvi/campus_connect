@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import emailjs from "emailjs-com";
 import {
@@ -25,12 +25,11 @@ export default function TeacherUserManagement() {
   const [yearFilter, setYearFilter] = useState("");
 
   const years = ["1", "2", "3", "4"];
-  const API = "http://localhost:8080/api/users";
 
   const fetchStudents = async () => {
     if (!user?.department) return;
     try {
-      const res = await axios.get(API);
+      const res = await API.get("/users");
       const deptStudents = res.data.filter(u => 
         u.department === user.department && u.role === "STUDENT"
       );
@@ -76,7 +75,7 @@ export default function TeacherUserManagement() {
     const password = Math.random().toString(36).slice(-8);
 
     try {
-      await axios.post(API, {
+      await API.post("/users", {
         ...form,
         role: "STUDENT",
         department: user.department,
@@ -99,7 +98,7 @@ export default function TeacherUserManagement() {
   const handleUpdate = async () => {
     if (!editStudent) return;
     try {
-      await axios.put(`${API}/${editStudent.id}`, editStudent);
+      await API.put(`/users/${editStudent.id}`, editStudent);
       setEditStudent(null);
       fetchStudents();
     } catch (error) {
@@ -110,7 +109,7 @@ export default function TeacherUserManagement() {
   const handleDelete = async (id) => {
     if (window.confirm("Delete student?")) {
       try {
-        await axios.delete(`${API}/${id}`);
+        await API.delete(`/users/${id}`);
         fetchStudents();
       } catch (error) {
         console.error("Failed to delete student:", error);
@@ -120,7 +119,7 @@ export default function TeacherUserManagement() {
 
   const handleApprove = async (id) => {
     try {
-      await axios.put(`${API}/${id}/approve`);
+      await API.put(`/users/${id}/approve`);
       fetchStudents();
     } catch (error) {
       console.error("Failed to approve student:", error);

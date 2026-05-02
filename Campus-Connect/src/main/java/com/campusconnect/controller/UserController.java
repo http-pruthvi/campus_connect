@@ -4,6 +4,7 @@ import com.campusconnect.model.User;
 import com.campusconnect.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,9 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     // GET ALL USERS
     @GetMapping
@@ -33,6 +37,9 @@ public class UserController {
     // CREATE USER
     @PostMapping
     public User createUser(@RequestBody User user) {
+        if (user.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         return userRepository.save(user);
     }
 
@@ -47,6 +54,12 @@ public class UserController {
             user.setYear(updatedUser.getYear());
             user.setApproved(updatedUser.isApproved());
             user.setFinanceAccess(updatedUser.isFinanceAccess());
+            
+            // Only update password if a new one is provided
+            if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
+            }
+            
             userRepository.save(user);
             return ResponseEntity.ok(user);
         }).orElseGet(() -> ResponseEntity.notFound().build());

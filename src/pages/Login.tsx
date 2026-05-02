@@ -13,6 +13,8 @@ import { useNavigate } from "react-router-dom";
 import "../styles/globals.css";
 import "../styles/Login.css";
 
+import API from "../api/axios";
+
 export default function Login() {
   const { setUser } = useAuth();
 
@@ -28,25 +30,8 @@ const handleLogin = async () => {
   setLoading(true);
 
   try {
-    const res = await fetch("http://localhost:8080/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const text = await res.text();
-    let data = {};
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      // Backend returned plain text (like "User not found")
-      data = { message: text };
-    }
-
-    if (!res.ok) {
-      setError(data.message || "Login failed");
-      return;
-    }
+    const res = await API.post("/auth/login", { email, password });
+    const data = res.data;
 
     // ✅ Normalize role properly
     const role = data.role?.trim().toUpperCase();
@@ -81,7 +66,7 @@ const handleLogin = async () => {
 
   } catch (err) {
     console.error(err);
-    setError("Server error. Please try again.");
+    setError(err.response?.data?.message || err.response?.data || "Server error. Please try again.");
   } finally {
     setLoading(false);
   }

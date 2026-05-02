@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Container, Typography, Grid, Paper, Button } from "@mui/material";
@@ -16,7 +16,7 @@ export default function HodDashboard() {
   // Fetch all department users
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/api/users");
+      const res = await API.get("/users");
       const deptUsers = res.data.filter(u => 
         u.department === user.department && 
         (u.role?.toUpperCase() === "TEACHER" || u.role?.toUpperCase() === "STUDENT")
@@ -30,10 +30,10 @@ export default function HodDashboard() {
 
   useEffect(() => { if(user) fetchUsers(); }, [user]);
 
-  // handleApprove is not actually used in this simple dashboard view, but keeping it empty or calling axios to prevent errors if invoked
+  // handleApprove is not actually used in this simple dashboard view, but keeping it empty or calling API to prevent errors if invoked
   const handleApprove = async (id) => {
     try {
-      await axios.put(`http://localhost:8080/api/users/${id}/approve`);
+      await API.put(`/users/${id}/approve`);
       fetchUsers();
     } catch (error) {
       console.error("Failed to approve:", error);

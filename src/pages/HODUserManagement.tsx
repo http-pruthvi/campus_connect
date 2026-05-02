@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import emailjs from "emailjs-com";
-import axios from "axios";
+import API from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 import {
   Container, Typography, Grid, Paper, Box, TextField, Select, MenuItem,
@@ -36,12 +36,9 @@ export default function HodUserManagement() {
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [feeForm, setFeeForm] = useState({ totalFees: "", paidFees: "" });
 
-  const API_USERS = "http://localhost:8080/api/users";
-  const API_FEES = "http://localhost:8080/api/fees";
-
   const fetchData = async () => {
     try {
-      const [uRes, fRes] = await Promise.all([axios.get(API_USERS), axios.get(API_FEES)]);
+      const [uRes, fRes] = await Promise.all([API.get("/users"), API.get("/fees")]);
       const deptUsers = uRes.data.filter(u => u.department?.toLowerCase() === user?.department?.toLowerCase());
       setUsers(deptUsers);
       setFees(fRes.data);
@@ -62,7 +59,7 @@ export default function HodUserManagement() {
     if (!form.name || !form.email) return alert("Fields missing");
     const password = Math.random().toString(36).slice(-8);
     try {
-      await axios.post(API_USERS, { ...form, department: user.department, password, approved: false });
+      await API.post("/users", { ...form, department: user.department, password, approved: false });
       emailjs.send("service_ydtu7jp", "template_etypntv", { name: form.name, email: form.email, password }, "NN3gMWSv34ggrAvsV");
       setForm({ name: "", email: "", role: "STUDENT", year: "" });
       fetchData();
@@ -70,22 +67,22 @@ export default function HodUserManagement() {
   };
 
   const handleUpdate = async () => {
-    try { await axios.put(`${API_USERS}/${editUser.id}`, editUser); setEditUser(null); fetchData(); } catch (e) { console.error(e); }
+    try { await API.put(`/users/${editUser.id}`, editUser); setEditUser(null); fetchData(); } catch (e) { console.error(e); }
   };
 
   const handleApprove = async (id) => {
-    try { await axios.put(`${API_USERS}/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
+    try { await API.put(`/users/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete user?")) {
-      try { await axios.delete(`${API_USERS}/${id}`); fetchData(); } catch (e) { console.error(e); }
+      try { await API.delete(`/users/${id}`); fetchData(); } catch (e) { console.error(e); }
     }
   };
 
   const handleAssignFee = async () => {
     try {
-      await axios.post(API_FEES, { totalFees: Number(feeForm.totalFees), paidFees: Number(feeForm.paidFees)||0, user: {id: selectedStudent.id} });
+      await API.post("/fees", { totalFees: Number(feeForm.totalFees), paidFees: Number(feeForm.paidFees)||0, user: {id: selectedStudent.id} });
       setIsAssignModalOpen(false);
       fetchData();
     } catch (e) { alert("Error"); }
@@ -95,7 +92,7 @@ export default function HodUserManagement() {
     try {
       const rec = fees.find(f => f.user?.id === selectedStudent.id);
       const paid = Number(rec.paidFees) + Number(feeForm.paidFees);
-      await axios.put(`${API_FEES}/${rec.id}`, { ...rec, paidFees: paid, remainingFees: rec.totalFees - paid, status: (rec.totalFees-paid)<=0?'Paid':'Pending' });
+      await API.put(`/fees/${rec.id}`, { ...rec, paidFees: paid, remainingFees: rec.totalFees - paid, status: (rec.totalFees-paid)<=0?'Paid':'Pending' });
       setIsPayModalOpen(false);
       fetchData();
     } catch (e) { alert("Error"); }

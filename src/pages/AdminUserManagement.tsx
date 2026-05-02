@@ -1,6 +1,6 @@
 import emailjs from "emailjs-com";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import {
   Container, Typography, TextField, Button, Grid, Paper, Box, Tabs, Tab,
   Switch, FormControlLabel, Dialog, DialogActions, DialogContent, 
@@ -26,11 +26,9 @@ export default function AdminUserManagement() {
   const [tabIndex, setTabIndex] = useState(0);
   const [editUser, setEditUser] = useState(null);
 
-  const API_USERS = "http://localhost:8080/api/users";
-
   const fetchData = async () => {
     try {
-      const uRes = await axios.get(API_USERS);
+      const uRes = await API.get("/users");
       setUsers(uRes.data);
     } catch (e) { console.error("Fetch error:", e); }
   };
@@ -49,7 +47,7 @@ export default function AdminUserManagement() {
     if (!form.name || !form.email || !form.role || !form.department) return alert("Fields missing");
     const password = Math.random().toString(36).slice(-8);
     try {
-      await axios.post(API_USERS, { ...form, role: form.role.toUpperCase(), password, approved: false });
+      await API.post("/users", { ...form, role: form.role.toUpperCase(), password, approved: false });
       emailjs.send("service_ydtu7jp", "template_etypntv", { name: form.name, email: form.email, password }, "NN3gMWSv34ggrAvsV");
       setForm({ name: "", email: "", role: "Student", department: "", year: "" });
       fetchData();
@@ -58,19 +56,19 @@ export default function AdminUserManagement() {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`${API_USERS}/${editUser.id}`, editUser);
+      await API.put(`/users/${editUser.id}`, editUser);
       setEditUser(null);
       fetchData();
     } catch (e) { console.error(e); }
   };
 
   const handleApprove = async (id) => {
-    try { await axios.put(`${API_USERS}/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
+    try { await API.put(`/users/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm("Delete user?")) {
-      try { await axios.delete(`${API_USERS}/${id}`); fetchData(); } catch (e) { console.error(e); }
+      try { await API.delete(`/users/${id}`); fetchData(); } catch (e) { console.error(e); }
     }
   };
 

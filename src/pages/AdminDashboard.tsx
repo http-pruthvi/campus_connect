@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -25,7 +25,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/users");
+        const res = await API.get("/users");
         setUsers(res.data);
       } catch (error) {
         console.error("Failed to fetch users:", error);

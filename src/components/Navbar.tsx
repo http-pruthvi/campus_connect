@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import {
   AppBar,
   Toolbar,
@@ -17,6 +16,11 @@ import { Link, useNavigate, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect } from "react";
 
+interface NavLinkItem {
+  label: string;
+  path: string;
+}
+
 export default function Navbar() {
   const { user, setUser } = useAuth();
   const navigate = useNavigate();
@@ -25,9 +29,13 @@ export default function Navbar() {
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser && !user) {
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from localStorage");
+      }
     }
-  }, []);
+  }, [user, setUser]);
 
   const handleLogout = () => {
     setUser(null);
@@ -40,10 +48,10 @@ export default function Navbar() {
     setMobileOpen(!mobileOpen);
   };
 
-  const role = user?.role?.trim().toUpperCase();
+  const role = user?.role;
 
   // Base links
-  const links = [
+  const links: NavLinkItem[] = [
     { label: "Home", path: "/home" },
     { label: "Notices", path: "/notices" },
     { label: "Lost & Found", path: "/lostfound" },
@@ -102,7 +110,7 @@ export default function Navbar() {
                   boxShadow: 'none',
                   '&:hover': { background: 'rgba(79, 70, 229, 0.1)', color: '#4F46E5', transform: 'none', boxShadow: 'none' },
                   '&.active': { background: 'rgba(79, 70, 229, 0.15)', color: '#4F46E5' }
-                }}
+                } as any}
               >
                 {link.label}
               </Button>

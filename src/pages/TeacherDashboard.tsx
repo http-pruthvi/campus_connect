@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Container, Typography, Grid, Paper } from "@mui/material";
@@ -16,7 +16,7 @@ export default function TeacherDashboard() {
     if (!user?.department) return;
     const fetchStudents = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/api/users");
+        const res = await API.get("/users");
         const deptStudents = res.data.filter(u => 
           u.department === user.department && u.role?.toUpperCase() === "STUDENT"
         );

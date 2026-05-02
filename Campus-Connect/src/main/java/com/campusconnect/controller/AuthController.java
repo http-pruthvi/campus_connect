@@ -22,6 +22,9 @@ public class AuthController {
     @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
 
@@ -35,10 +38,13 @@ public class AuthController {
 
         User user = userOpt.get();
 
-        // ❌ Wrong password
-        if (!user.getPassword().equals(request.getPassword())) {
-            return ResponseEntity.status(401)
-                    .body("Invalid credentials");
+        // ❌ Wrong password (handles both BCrypt and plain-text for migration, though BCrypt is preferred)
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            // Fallback for existing plain-text passwords (optional, but good for transition)
+            if (!user.getPassword().equals(request.getPassword())) {
+                return ResponseEntity.status(401)
+                        .body("Invalid credentials");
+            }
         }
 
         // ❌ Not approved

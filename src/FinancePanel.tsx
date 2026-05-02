@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "./api/axios";
 import { useAuth } from "./context/AuthContext";
 import {
   Container, Typography, Box, TextField, Select, MenuItem,
@@ -40,9 +40,6 @@ export default function FinancePanel() {
     paymentMethod: "Cash", referenceNumber: ""
   });
 
-  const API_USERS = "http://localhost:8080/api/users";
-  const API_FEES = "http://localhost:8080/api/fees";
-
   if (user && user.role?.toUpperCase() !== "ADMIN" && !user.financeAccess) {
     return (
       <Container maxWidth="lg" sx={{ mt: 10, textAlign: 'center' }}>
@@ -57,8 +54,8 @@ export default function FinancePanel() {
   const fetchData = async () => {
     try {
       const [usersRes, feesRes] = await Promise.all([
-        axios.get(API_USERS),
-        axios.get(API_FEES)
+        API.get("/users"),
+        API.get("/fees")
       ]);
       const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
       const allFees = Array.isArray(feesRes.data) ? feesRes.data : [];
@@ -80,7 +77,7 @@ export default function FinancePanel() {
   const toggleUserAccess = async (targetUser) => {
     try {
       const updatedUser = { ...targetUser, financeAccess: !targetUser.financeAccess };
-      await axios.put(`${API_USERS}/${targetUser.id}`, updatedUser);
+      await API.put(`/users/${targetUser.id}`, updatedUser);
       fetchData(); // Refresh the list
     } catch (e) {
       alert("Error updating user access");
@@ -96,7 +93,7 @@ export default function FinancePanel() {
     setIsDetailsModalOpen(true);
     setStudentTransactions([]);
     try {
-      const res = await axios.get(`http://localhost:8080/api/transactions/user/${student.id}`);
+      const res = await API.get(`/transactions/user/${student.id}`);
       setStudentTransactions(res.data);
     } catch (e) {
       console.error("Failed to fetch transactions");
@@ -126,7 +123,7 @@ export default function FinancePanel() {
 
     if (total === 0 || !selectedStudent) return alert("Total fee cannot be zero");
     try {
-      await axios.post(API_FEES, {
+      await API.post("/fees", {
         totalFees: total,
         paidFees: Number(feeForm.paidFees) || 0,
         tuitionFee: tuition,
@@ -148,7 +145,7 @@ export default function FinancePanel() {
       const paymentAmount = Number(feeForm.paidFees);
       const paid = Number(rec.paidFees) + paymentAmount;
       
-      await axios.put(`${API_FEES}/${rec.id}`, {
+      await API.put(`/fees/${rec.id}`, {
         id: rec.id,
         totalFees: rec.totalFees,
         paidFees: paid,

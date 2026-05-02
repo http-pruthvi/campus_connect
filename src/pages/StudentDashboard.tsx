@@ -1,8 +1,8 @@
+import { useEffect, useState } from "react";
+import API from "../api/axios";
 import { Container, Typography, Grid, Paper, Box, Avatar, Divider, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import axios from "axios";
 import PersonIcon from "@mui/icons-material/Person";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import EventIcon from "@mui/icons-material/Event";
@@ -22,7 +22,7 @@ export default function StudentDashboard() {
     const userId = user?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
     if (userId && userId !== "undefined") {
       // Fetch Fee Summary
-      axios.get(`http://localhost:8080/api/fees/user/${userId}`)
+      API.get(`/fees/user/${userId}`)
         .then(res => {
           if (Array.isArray(res.data) && res.data.length > 0) {
             setFeeRecord(res.data[0]);
@@ -33,7 +33,7 @@ export default function StudentDashboard() {
         .catch(err => console.error("Failed to fetch fees:", err));
 
       // Fetch Transaction History
-      axios.get(`http://localhost:8080/api/transactions/user/${userId}`)
+      API.get(`/transactions/user/${userId}`)
         .then(res => {
           setTransactions(res.data);
         })
