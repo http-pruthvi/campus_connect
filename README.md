@@ -32,11 +32,10 @@ Tailored experiences for different user groups, ensuring relevant access and too
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/)
+- **Frontend**: [React](https://reactjs.org/) + [Vite](https://vitejs.dev/) + [TypeScript](https://www.typescriptlang.org/)
 - **UI Framework**: [Material UI (MUI)](https://mui.com/)
 - **Backend/Database**: [Firebase](https://firebase.google.com/) (Authentication, Firestore, Storage)
 - **Utilities**: 
-  - [Axios](https://axios-http.com/) (API handling)
   - [jsPDF](https://github.com/parallax/jsPDF) & [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) (PDF Generation)
   - [EmailJS](https://www.emailjs.com/) (Notification Services)
 
@@ -52,7 +51,7 @@ Tailored experiences for different user groups, ensuring relevant access and too
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/Shreyagosavi811/campus-connect.git
+   git clone https://github.com/http-pruthvi/campus_connect.git
    cd campus-connect
    ```
 
@@ -62,16 +61,15 @@ Tailored experiences for different user groups, ensuring relevant access and too
    ```
 
 3. **Firebase Configuration**
-   Update the Firebase configuration in `src/firebase.js` with your project credentials:
-   ```javascript
-   const firebaseConfig = {
-     apiKey: "YOUR_API_KEY",
-     authDomain: "YOUR_AUTH_DOMAIN",
-     projectId: "YOUR_PROJECT_ID",
-     storageBucket: "YOUR_STORAGE_BUCKET",
-     messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-     appId: "YOUR_APP_ID"
-   };
+   Update the Firebase configuration in `src/firebase.ts` or create a `.env` file:
+   ```env
+   VITE_FIREBASE_API_KEY="YOUR_API_KEY"
+   VITE_FIREBASE_AUTH_DOMAIN="YOUR_AUTH_DOMAIN"
+   VITE_FIREBASE_PROJECT_ID="YOUR_PROJECT_ID"
+   VITE_FIREBASE_STORAGE_BUCKET="YOUR_STORAGE_BUCKET"
+   VITE_FIREBASE_MESSAGING_SENDER_ID="YOUR_MESSAGING_SENDER_ID"
+   VITE_FIREBASE_APP_ID="YOUR_APP_ID"
+   VITE_FIREBASE_MEASUREMENT_ID="YOUR_MEASUREMENT_ID"
    ```
 
 4. **Run the Development Server**
@@ -89,12 +87,13 @@ campus-connect/
 ├── src/
 │   ├── components/      # Reusable UI components
 │   ├── pages/           # Page-level components (Dashboards, Home, etc.)
+│   ├── context/         # Auth and Global State
 │   ├── utils/           # Helper functions (PDF generators, etc.)
-│   ├── firebase.js      # Firebase initialization and auth
-│   ├── theme.js         # MUI theme configuration
-│   └── App.jsx          # Main application routing
+│   ├── firebase.ts      # Firebase initialization
+│   ├── theme.ts         # MUI theme configuration
+│   └── App.tsx          # Main application routing
 ├── package.json         # Project dependencies
-└── vite.config.js       # Vite configuration
+└── vite.config.ts       # Vite configuration
 ```
 
 ---

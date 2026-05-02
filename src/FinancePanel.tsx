@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "./api/axios";
+import { db } from "./firebase";
+import { collection, getDocs, addDoc, updateDoc, doc, query, where } from "firebase/firestore";
 import { useAuth } from "./context/AuthContext";
 import {
   Container, Typography, Box, TextField, Select, MenuItem,
@@ -13,7 +14,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import "./styles/TeacherDashboard.css";
 
-function TabPanel({ children, value, index }) {
+function TabPanel({ children, value, index }: any) {
   return (
     <div hidden={value !== index}>
       {value === index && <Box sx={{ mt: 2 }}>{children}</Box>}
@@ -23,16 +24,16 @@ function TabPanel({ children, value, index }) {
 
 export default function FinancePanel() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [fees, setFees] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
+  const [fees, setFees] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [masterTab, setMasterTab] = useState(0);
   const [tabIndex, setTabIndex] = useState(0);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [studentTransactions, setStudentTransactions] = useState([]);
+  const [studentTransactions, setStudentTransactions] = useState<any[]>([]);
   
   const [feeForm, setFeeForm] = useState({ 
     totalFees: "", paidFees: "", 
@@ -53,31 +54,32 @@ export default function FinancePanel() {
 
   const fetchData = async () => {
     try {
-      const [usersRes, feesRes] = await Promise.all([
-        API.get("/users"),
-        API.get("/fees")
+      const [uSnap, fSnap] = await Promise.all([
+        getDocs(collection(db, "users")),
+        getDocs(collection(db, "fees"))
       ]);
-      const allUsers = Array.isArray(usersRes.data) ? usersRes.data : [];
-      const allFees = Array.isArray(feesRes.data) ? feesRes.data : [];
-      let deptStudents = allUsers.filter(u => u.role?.toUpperCase() === "STUDENT");
+      const allUsers = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const allFees = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      let deptStudents = allUsers.filter((u: any) => u.role?.toUpperCase() === "STUDENT");
       if (user?.role?.toUpperCase() !== "ADMIN") {
-        deptStudents = deptStudents.filter(u => u.department?.toLowerCase() === user?.department?.toLowerCase());
+        deptStudents = deptStudents.filter((u: any) => u.department?.toLowerCase() === user?.department?.toLowerCase());
       }
       setStudents(deptStudents);
-      // For the Access Management tab, store all users EXCEPT students
-      setAllPlatformUsers(allUsers.filter(u => u.role?.toUpperCase() !== "STUDENT"));
+      setAllPlatformUsers(allUsers.filter((u: any) => u.role?.toUpperCase() !== "STUDENT"));
       setFees(allFees);
     } catch (error) {
       console.error("Fetch error:", error);
     }
   };
 
-  const [allPlatformUsers, setAllPlatformUsers] = useState([]);
+  const [allPlatformUsers, setAllPlatformUsers] = useState<any[]>([]);
 
-  const toggleUserAccess = async (targetUser) => {
+  const toggleUserAccess = async (targetUser: any) => {
     try {
-      const updatedUser = { ...targetUser, financeAccess: !targetUser.financeAccess };
-      await API.put(`/users/${targetUser.id}`, updatedUser);
+      const { id, ...userData } = targetUser;
+      const updatedAccess = !userData.financeAccess;
+      await updateDoc(doc(db, "users", id), { financeAccess: updatedAccess });
       fetchData(); // Refresh the list
     } catch (e) {
       alert("Error updating user access");
@@ -88,19 +90,21 @@ export default function FinancePanel() {
     if (user) fetchData();
   }, [user]);
 
-  const handleOpenStudentDetails = async (student) => {
+  const handleOpenStudentDetails = async (student: any) => {
     setSelectedStudent(student);
     setIsDetailsModalOpen(true);
     setStudentTransactions([]);
     try {
-      const res = await API.get(`/transactions/user/${student.id}`);
-      setStudentTransactions(res.data);
+      const q = query(collection(db, "transactions"), where("user.id", "==", student.id));
+      const querySnapshot = await getDocs(q);
+      const txList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setStudentTransactions(txList);
     } catch (e) {
       console.error("Failed to fetch transactions");
     }
   };
 
-  const highlight = (text, query) => {
+  const highlight = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
     return text?.split(regex).map((part, i) =>
@@ -110,7 +114,7 @@ export default function FinancePanel() {
     );
   };
 
-  const getStudentFeeRecord = (studentId) => {
+  const getStudentFeeRecord = (studentId: string) => {
     return fees.find(f => (f.user && f.user.id === studentId) || (f.userId === studentId));
   };
 
@@ -123,15 +127,17 @@ export default function FinancePanel() {
 
     if (total === 0 || !selectedStudent) return alert("Total fee cannot be zero");
     try {
-      await API.post("/fees", {
+      await addDoc(collection(db, "fees"), {
         totalFees: total,
         paidFees: Number(feeForm.paidFees) || 0,
+        remainingFees: total - (Number(feeForm.paidFees) || 0),
+        status: (total - (Number(feeForm.paidFees) || 0)) <= 0 ? "Paid" : "Pending",
         tuitionFee: tuition,
         libraryFee: library,
         hostelFee: hostel,
         examFee: exam,
         semester: feeForm.semester,
-        user: { id: selectedStudent.id }
+        user: { id: selectedStudent.id, department: selectedStudent.department }
       });
       setIsAssignModalOpen(false);
       fetchData();
@@ -145,8 +151,7 @@ export default function FinancePanel() {
       const paymentAmount = Number(feeForm.paidFees);
       const paid = Number(rec.paidFees) + paymentAmount;
       
-      await API.put(`/fees/${rec.id}`, {
-        id: rec.id,
+      await updateDoc(doc(db, "fees", rec.id), {
         totalFees: rec.totalFees,
         paidFees: paid,
         remainingFees: rec.totalFees - paid,
@@ -154,6 +159,16 @@ export default function FinancePanel() {
         paymentMethod: feeForm.paymentMethod,
         referenceNumber: feeForm.referenceNumber,
         user: { id: selectedStudent.id }
+      });
+
+      // Optionally log a transaction here if needed in a pure Firebase setup
+      await addDoc(collection(db, "transactions"), {
+        date: new Date().toISOString(),
+        type: "PAYMENT",
+        amount: paymentAmount,
+        paymentMethod: feeForm.paymentMethod,
+        referenceNumber: feeForm.referenceNumber,
+        user: { id: selectedStudent.id, name: selectedStudent.name }
       });
 
       setIsPayModalOpen(false);

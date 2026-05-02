@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/globals.css";
 import "../styles/Login.css";
 
-import API from "../api/axios";
+import { auth, signInWithEmailAndPassword } from "../firebase";
 
 export default function Login() {
   const { setUser } = useAuth();
@@ -30,43 +30,23 @@ const handleLogin = async () => {
   setLoading(true);
 
   try {
-    const res = await API.post("/auth/login", { email, password });
-    const data = res.data;
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
 
-    // ✅ Normalize role properly
-    const role = data.role?.trim().toUpperCase();
+    // The AuthContext will pick up the change and fetch the user profile from Firestore
+    // We can just wait for the context to update, but to ensure smooth navigation:
+    // We'll navigate to /home first, and the ProtectedRoutes will handle redirection if needed.
+    navigate("/home");
 
-    // ✅ Store token & role separately (VERY IMPORTANT)
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("role", role);
-
-    const userData = {
-      id: data.id,
-      email: data.email,
-      role,
-      name: data.name,
-      department: data.department,
-      year: data.year,
-      financeAccess: data.financeAccess,
-    };
-
-    setUser(userData);
-    localStorage.setItem("user", JSON.stringify(userData));
-
-    // ✅ Role-based navigation (FIXES your navbar issue too)
-    if (role === "ADMIN") {
-      navigate("/admin");
-    } else if (role === "TEACHER") {
-      navigate("/teacher");
-    } else if (role === "HOD") {
-      navigate("/hod");
-    } else {
-      navigate("/student");
-    }
-
-  } catch (err) {
+  } catch (err: any) {
     console.error(err);
-    setError(err.response?.data?.message || err.response?.data || "Server error. Please try again.");
+    let message = "Login failed. Please check your credentials.";
+    if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+      message = "Invalid email or password.";
+    } else if (err.code === "auth/too-many-requests") {
+      message = "Too many failed attempts. Please try again later.";
+    }
+    setError(message);
   } finally {
     setLoading(false);
   }

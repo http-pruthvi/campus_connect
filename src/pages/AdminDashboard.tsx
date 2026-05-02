@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import {
   Container,
@@ -17,7 +18,7 @@ import "../styles/AdminDashboard.css";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [deptFilter, setDeptFilter] = useState("");
@@ -25,8 +26,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await API.get("/users");
-        setUsers(res.data);
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const usersList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setUsers(usersList);
       } catch (error) {
         console.error("Failed to fetch users:", error);
       }

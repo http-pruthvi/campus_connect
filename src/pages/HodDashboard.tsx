@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, updateDoc, doc, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Container, Typography, Grid, Paper, Button } from "@mui/material";
@@ -10,19 +11,23 @@ import "../styles/HODDashboard.css";
 export default function HodDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [pendingList, setPendingList] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [pendingList, setPendingList] = useState<any[]>([]);
 
   // Fetch all department users
   const fetchUsers = async () => {
     try {
-      const res = await API.get("/users");
-      const deptUsers = res.data.filter(u => 
-        u.department === user.department && 
-        (u.role?.toUpperCase() === "TEACHER" || u.role?.toUpperCase() === "STUDENT")
+      if (!user?.department) return;
+      const q = query(collection(db, "users"), where("department", "==", user.department));
+      const querySnapshot = await getDocs(q);
+      const deptUsers = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })).filter((u: any) => 
+        u.role?.toUpperCase() === "TEACHER" || u.role?.toUpperCase() === "STUDENT"
       );
       setUsers(deptUsers);
-      setPendingList(deptUsers.filter(u => !u.approved));
+      setPendingList(deptUsers.filter((u: any) => !u.approved));
     } catch (error) {
       console.error("Failed to fetch users:", error);
     }
@@ -31,9 +36,9 @@ export default function HodDashboard() {
   useEffect(() => { if(user) fetchUsers(); }, [user]);
 
   // handleApprove is not actually used in this simple dashboard view, but keeping it empty or calling API to prevent errors if invoked
-  const handleApprove = async (id) => {
+  const handleApprove = async (id: string) => {
     try {
-      await API.put(`/users/${id}/approve`);
+      await updateDoc(doc(db, "users", id), { approved: true });
       fetchUsers();
     } catch (error) {
       console.error("Failed to approve:", error);

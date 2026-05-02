@@ -3,7 +3,7 @@ import { ThemeProvider, CssBaseline } from "@mui/material";
 import { AuthProvider } from "./context/AuthContext";
 import theme from "./theme";
 
-import PrivateRoute from "./routes/PrivateRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
@@ -46,99 +46,60 @@ export default function App() {
           <Route path="/home" element={<Home />} />
 
           {/* ================= COMMON (ALL LOGGED USERS) ================= */}
-          <Route
-            path="/events"
-            element={
-              <PrivateRoute allowedRoles={["admin", "hod", "teacher", "student"]}>
-                <Events />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/notices"
-            element={
-              <PrivateRoute allowedRoles={["admin", "hod", "teacher", "student"]}>
-                <NoticeBoard />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/lostfound"
-            element={
-              <PrivateRoute allowedRoles={["admin", "hod", "teacher", "student"]}>
-                <LostFoundPage />
-              </PrivateRoute>
-            }
-          />
-
-          <Route
-            path="/queries"
-            element={
-              <PrivateRoute allowedRoles={["admin", "hod", "teacher", "student"]}>
-                <QueriesPage />
-              </PrivateRoute>
-            }
-          />
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN", "HOD", "TEACHER", "STUDENT"]} />}>
+            <Route path="/events" element={<Events />} />
+            <Route path="/notices" element={<NoticeBoard />} />
+            <Route path="/lostfound" element={<LostFoundPage />} />
+            <Route path="/queries" element={<QueriesPage />} />
+          </Route>
 
           {/* ================= ADMIN ================= */}
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute allowedRoles={["admin"]}>
+          <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+            <Route
+              path="/admin"
+              element={
                 <div>
                   <AdminDashboard />
                   <AdminUserManagement />
                 </div>
-              </PrivateRoute>
-            }
-          />
+              }
+            />
+          </Route>
 
           {/* ================= HOD ================= */}
-          <Route
-            path="/hod"
-            element={
-              <PrivateRoute allowedRoles={["hod"]}>
+          <Route element={<ProtectedRoute allowedRoles={["HOD"]} />}>
+            <Route
+              path="/hod"
+              element={
                 <div>
                   <HodDashboard />
                   <HODUserManagement />
                 </div>
-              </PrivateRoute>
-            }
-          />
+              }
+            />
+          </Route>
 
           {/* ================= TEACHER ================= */}
-          <Route
-            path="/teacher"
-            element={
-              <PrivateRoute allowedRoles={["teacher"]}>
+          <Route element={<ProtectedRoute allowedRoles={["TEACHER"]} />}>
+            <Route
+              path="/teacher"
+              element={
                 <div>
                   <TeacherDashboard />
                   <TeacherUserManagement />
                 </div>
-              </PrivateRoute>
-            }
-          />
+              }
+            />
+          </Route>
 
-          <Route
-            path="/fees"
-            element={
-              <PrivateRoute allowedRoles={["teacher", "hod", "admin"]}>
-                <FinancePanel />
-              </PrivateRoute>
-            }
-          />
+          <Route element={<ProtectedRoute allowedRoles={["TEACHER", "HOD", "ADMIN"]} />}>
+            <Route path="/fees" element={<FinancePanel />} />
+          </Route>
 
           {/* ================= STUDENT ================= */}
-          <Route
-            path="/student"
-            element={
-              <PrivateRoute allowedRoles={["student", "admin"]}>
-                <StudentDashboard />
-              </PrivateRoute>
-            }
-          />
+          <Route element={<ProtectedRoute allowedRoles={["STUDENT", "ADMIN"]} />}>
+            <Route path="/student" element={<StudentDashboard />} />
+          </Route>
 
         </Routes>
       </Router>

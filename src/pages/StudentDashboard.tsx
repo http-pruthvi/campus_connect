@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { Container, Typography, Grid, Paper, Box, Avatar, Divider, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -15,29 +16,39 @@ import "../styles/Home.css"; // Reuse some styles
 export default function StudentDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [feeRecord, setFeeRecord] = useState(null);
-  const [transactions, setTransactions] = useState([]);
+  const [feeRecord, setFeeRecord] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
 
   useEffect(() => {
     const userId = user?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
     if (userId && userId !== "undefined") {
       // Fetch Fee Summary
-      API.get(`/fees/user/${userId}`)
-        .then(res => {
-          if (Array.isArray(res.data) && res.data.length > 0) {
-            setFeeRecord(res.data[0]);
-          } else if (res.data && !Array.isArray(res.data)) {
-            setFeeRecord(res.data);
+      const fetchFees = async () => {
+        try {
+          const q = query(collection(db, "fees"), where("user.id", "==", userId));
+          const querySnapshot = await getDocs(q);
+          if (!querySnapshot.empty) {
+            setFeeRecord({ id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() });
           }
-        })
-        .catch(err => console.error("Failed to fetch fees:", err));
+        } catch (err) {
+          console.error("Failed to fetch fees:", err);
+        }
+      };
 
       // Fetch Transaction History
-      API.get(`/transactions/user/${userId}`)
-        .then(res => {
-          setTransactions(res.data);
-        })
-        .catch(err => console.error("Failed to fetch transactions:", err));
+      const fetchTransactions = async () => {
+        try {
+          const q = query(collection(db, "transactions"), where("user.id", "==", userId));
+          const querySnapshot = await getDocs(q);
+          const txList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setTransactions(txList);
+        } catch (err) {
+          console.error("Failed to fetch transactions:", err);
+        }
+      };
+
+      fetchFees();
+      fetchTransactions();
     }
   }, [user]);
 

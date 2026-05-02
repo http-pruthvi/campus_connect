@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import emailjs from "emailjs-com";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import {
   Container, Typography, Grid, Paper, Box, TextField, Select, MenuItem,
@@ -13,7 +14,7 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import "../styles/HODDashboard.css";
 
-function TabPanel({ children, value, index }) {
+function TabPanel({ children, value, index }: any) {
   return (
     <div hidden={value !== index}>
       {value === index && <Box sx={{ mt: 2 }}>{children}</Box>}
@@ -23,31 +24,39 @@ function TabPanel({ children, value, index }) {
 
 export default function HodUserManagement() {
   const { user } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [fees, setFees] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [fees, setFees] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", email: "", role: "STUDENT", year: "" });
   const [tabIndex, setTabIndex] = useState(0);
-  const [editUser, setEditUser] = useState(null);
+  const [editUser, setEditUser] = useState<any>(null);
 
   // Fee state
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [feeForm, setFeeForm] = useState({ totalFees: "", paidFees: "" });
 
   const fetchData = async () => {
     try {
-      const [uRes, fRes] = await Promise.all([API.get("/users"), API.get("/fees")]);
-      const deptUsers = uRes.data.filter(u => u.department?.toLowerCase() === user?.department?.toLowerCase());
-      setUsers(deptUsers);
-      setFees(fRes.data);
+      if (!user?.department) return;
+      const usersQuery = query(collection(db, "users"), where("department", "==", user.department));
+      const [uSnap, fSnap] = await Promise.all([
+        getDocs(usersQuery),
+        getDocs(collection(db, "fees"))
+      ]);
+      
+      const usersList = uSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const feesList = fSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      setUsers(usersList);
+      setFees(feesList);
     } catch (e) { console.error(e); }
   };
 
   useEffect(() => { if (user) fetchData(); }, [user]);
 
-  const highlight = (text, query) => {
+  const highlight = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
     return text?.split(regex).map((part, i) =>
@@ -59,7 +68,7 @@ export default function HodUserManagement() {
     if (!form.name || !form.email) return alert("Fields missing");
     const password = Math.random().toString(36).slice(-8);
     try {
-      await API.post("/users", { ...form, department: user.department, password, approved: false });
+      await addDoc(collection(db, "users"), { ...form, department: user.department, password, approved: false });
       emailjs.send("service_ydtu7jp", "template_etypntv", { name: form.name, email: form.email, password }, "NN3gMWSv34ggrAvsV");
       setForm({ name: "", email: "", role: "STUDENT", year: "" });
       fetchData();
@@ -67,22 +76,35 @@ export default function HodUserManagement() {
   };
 
   const handleUpdate = async () => {
-    try { await API.put(`/users/${editUser.id}`, editUser); setEditUser(null); fetchData(); } catch (e) { console.error(e); }
+    try { 
+      const { id, ...userData } = editUser;
+      await updateDoc(doc(db, "users", id), userData); 
+      setEditUser(null); 
+      fetchData(); 
+    } catch (e) { console.error(e); }
   };
 
-  const handleApprove = async (id) => {
-    try { await API.put(`/users/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
+  const handleApprove = async (id: string) => {
+    try { await updateDoc(doc(db, "users", id), { approved: true }); fetchData(); } catch (e) { console.error(e); }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Delete user?")) {
-      try { await API.delete(`/users/${id}`); fetchData(); } catch (e) { console.error(e); }
+      try { await deleteDoc(doc(db, "users", id)); fetchData(); } catch (e) { console.error(e); }
     }
   };
 
   const handleAssignFee = async () => {
     try {
-      await API.post("/fees", { totalFees: Number(feeForm.totalFees), paidFees: Number(feeForm.paidFees)||0, user: {id: selectedStudent.id} });
+      const total = Number(feeForm.totalFees);
+      const paid = Number(feeForm.paidFees) || 0;
+      await addDoc(collection(db, "fees"), { 
+        totalFees: total, 
+        paidFees: paid, 
+        remainingFees: total - paid,
+        status: (total - paid) <= 0 ? 'Paid' : 'Pending',
+        user: { id: selectedStudent.id, department: selectedStudent.department } 
+      });
       setIsAssignModalOpen(false);
       fetchData();
     } catch (e) { alert("Error"); }
@@ -92,7 +114,12 @@ export default function HodUserManagement() {
     try {
       const rec = fees.find(f => f.user?.id === selectedStudent.id);
       const paid = Number(rec.paidFees) + Number(feeForm.paidFees);
-      await API.put(`/fees/${rec.id}`, { ...rec, paidFees: paid, remainingFees: rec.totalFees - paid, status: (rec.totalFees-paid)<=0?'Paid':'Pending' });
+      await updateDoc(doc(db, "fees", rec.id), { 
+        ...rec, 
+        paidFees: paid, 
+        remainingFees: rec.totalFees - paid, 
+        status: (rec.totalFees - paid) <= 0 ? 'Paid' : 'Pending' 
+      });
       setIsPayModalOpen(false);
       fetchData();
     } catch (e) { alert("Error"); }

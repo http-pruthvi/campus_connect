@@ -1,6 +1,7 @@
 import emailjs from "emailjs-com";
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 import {
   Container, Typography, TextField, Button, Grid, Paper, Box, Tabs, Tab,
   Switch, FormControlLabel, Dialog, DialogActions, DialogContent, 
@@ -10,7 +11,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
 import "../styles/AdminDashboard.css";
 
-function TabPanel({ children, value, index }) {
+function TabPanel({ children, value, index }: any) {
   return (
     <div hidden={value !== index}>
       {value === index && <Box sx={{ mt: 2 }}>{children}</Box>}
@@ -19,23 +20,27 @@ function TabPanel({ children, value, index }) {
 }
 
 export default function AdminUserManagement() {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [fees, setFees] = useState([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", email: "", role: "Student", department: "", year: "" });
   const [tabIndex, setTabIndex] = useState(0);
-  const [editUser, setEditUser] = useState(null);
+  const [editUser, setEditUser] = useState<any>(null);
 
   const fetchData = async () => {
     try {
-      const uRes = await API.get("/users");
-      setUsers(uRes.data);
+      const querySnapshot = await getDocs(collection(db, "users"));
+      const usersList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(usersList);
     } catch (e) { console.error("Fetch error:", e); }
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const highlight = (text, query) => {
+  const highlight = (text: string, query: string) => {
     if (!query) return text;
     const regex = new RegExp(`(${query})`, "gi");
     return text?.split(regex).map((part, i) =>
@@ -47,7 +52,7 @@ export default function AdminUserManagement() {
     if (!form.name || !form.email || !form.role || !form.department) return alert("Fields missing");
     const password = Math.random().toString(36).slice(-8);
     try {
-      await API.post("/users", { ...form, role: form.role.toUpperCase(), password, approved: false });
+      await addDoc(collection(db, "users"), { ...form, role: form.role.toUpperCase(), password, approved: false });
       emailjs.send("service_ydtu7jp", "template_etypntv", { name: form.name, email: form.email, password }, "NN3gMWSv34ggrAvsV");
       setForm({ name: "", email: "", role: "Student", department: "", year: "" });
       fetchData();
@@ -56,19 +61,20 @@ export default function AdminUserManagement() {
 
   const handleUpdate = async () => {
     try {
-      await API.put(`/users/${editUser.id}`, editUser);
+      const { id, ...userData } = editUser;
+      await updateDoc(doc(db, "users", id), userData);
       setEditUser(null);
       fetchData();
     } catch (e) { console.error(e); }
   };
 
-  const handleApprove = async (id) => {
-    try { await API.put(`/users/${id}/approve`); fetchData(); } catch (e) { console.error(e); }
+  const handleApprove = async (id: string) => {
+    try { await updateDoc(doc(db, "users", id), { approved: true }); fetchData(); } catch (e) { console.error(e); }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Delete user?")) {
-      try { await API.delete(`/users/${id}`); fetchData(); } catch (e) { console.error(e); }
+      try { await deleteDoc(doc(db, "users", id)); fetchData(); } catch (e) { console.error(e); }
     }
   };
 

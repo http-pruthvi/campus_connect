@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Container, Typography, Grid, Paper } from "@mui/material";
@@ -9,17 +10,23 @@ import "../styles/TeacherDashboard.css";
 export default function TeacherDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
 
   // Fetch students in real-time equivalent
   useEffect(() => {
     if (!user?.department) return;
     const fetchStudents = async () => {
       try {
-        const res = await API.get("/users");
-        const deptStudents = res.data.filter(u => 
-          u.department === user.department && u.role?.toUpperCase() === "STUDENT"
+        const q = query(
+          collection(db, "users"), 
+          where("department", "==", user.department),
+          where("role", "==", "STUDENT")
         );
+        const querySnapshot = await getDocs(q);
+        const deptStudents = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         setStudents(deptStudents);
       } catch (error) {
         console.error("Failed to fetch students:", error);

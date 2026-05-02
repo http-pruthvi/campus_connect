@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import API from "../api/axios";
+import { db } from "../firebase";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import emailjs from "emailjs-com";
 import {
@@ -11,17 +12,17 @@ import PersonIcon from '@mui/icons-material/Person';
 import SearchIcon from "@mui/icons-material/Search";
 import "../styles/TeacherDashboard.css";
 
-function TabPanel({ children, value, index }) {
+function TabPanel({ children, value, index }: any) {
   return <div hidden={value !== index}>{value === index && <Box sx={{ mt: 2 }}>{children}</Box>}</div>;
 }
 
 export default function TeacherUserManagement() {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
+  const [students, setStudents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", email: "", year: "" });
   const [tabIndex, setTabIndex] = useState(0);
-  const [editStudent, setEditStudent] = useState(null);
+  const [editStudent, setEditStudent] = useState<any>(null);
   const [yearFilter, setYearFilter] = useState("");
 
   const years = ["1", "2", "3", "4"];
@@ -29,10 +30,16 @@ export default function TeacherUserManagement() {
   const fetchStudents = async () => {
     if (!user?.department) return;
     try {
-      const res = await API.get("/users");
-      const deptStudents = res.data.filter(u => 
-        u.department === user.department && u.role === "STUDENT"
+      const q = query(
+        collection(db, "users"), 
+        where("department", "==", user.department),
+        where("role", "==", "STUDENT")
       );
+      const querySnapshot = await getDocs(q);
+      const deptStudents = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       setStudents(deptStudents);
     } catch (error) {
       console.error("Failed to fetch students:", error);
@@ -44,7 +51,7 @@ export default function TeacherUserManagement() {
   }, [user]);
 
   // 🔍 Highlight function
-  const highlight = (text) => {
+  const highlight = (text: string) => {
     if (!search) return text;
     const regex = new RegExp(`(${search})`, "gi");
     return text?.split(regex).map((part, i) =>
@@ -55,7 +62,7 @@ export default function TeacherUserManagement() {
   };
 
   // 🔍 Apply filters
-  const applyFilters = (list) => {
+  const applyFilters = (list: any[]) => {
     return list.filter(s => {
       const matchSearch =
         s.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -75,7 +82,7 @@ export default function TeacherUserManagement() {
     const password = Math.random().toString(36).slice(-8);
 
     try {
-      await API.post("/users", {
+      await addDoc(collection(db, "users"), {
         ...form,
         role: "STUDENT",
         department: user.department,
@@ -98,7 +105,8 @@ export default function TeacherUserManagement() {
   const handleUpdate = async () => {
     if (!editStudent) return;
     try {
-      await API.put(`/users/${editStudent.id}`, editStudent);
+      const { id, ...studentData } = editStudent;
+      await updateDoc(doc(db, "users", id), studentData);
       setEditStudent(null);
       fetchStudents();
     } catch (error) {
@@ -106,10 +114,10 @@ export default function TeacherUserManagement() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     if (window.confirm("Delete student?")) {
       try {
-        await API.delete(`/users/${id}`);
+        await deleteDoc(doc(db, "users", id));
         fetchStudents();
       } catch (error) {
         console.error("Failed to delete student:", error);
@@ -117,9 +125,9 @@ export default function TeacherUserManagement() {
     }
   };
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (id: string) => {
     try {
-      await API.put(`/users/${id}/approve`);
+      await updateDoc(doc(db, "users", id), { approved: true });
       fetchStudents();
     } catch (error) {
       console.error("Failed to approve student:", error);
