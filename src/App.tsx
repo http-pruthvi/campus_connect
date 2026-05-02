@@ -43,6 +43,7 @@ export default function App() {
 
           {/* ================= PUBLIC ================= */}
           <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/home" element={<Home />} />
 
           {/* ================= COMMON (ALL LOGGED USERS) ================= */}

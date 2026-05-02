@@ -90,6 +90,15 @@ const handleLogin = async () => {
       >
         {loading ? <CircularProgress size={24} /> : "Login"}
       </Button>
+
+      <Box sx={{ mt: 3 }}>
+        <Typography variant="body2" color="textSecondary">
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "#4F46E5", fontWeight: "bold", textDecoration: "none" }}>
+            Register here
+          </Link>
+        </Typography>
+      </Box>
     </Container>
   );
 }
