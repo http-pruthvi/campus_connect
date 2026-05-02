@@ -1,240 +1,242 @@
-import { useEffect, useState } from "react";
-import { db } from "../firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { Container, Typography, Grid, Paper, Box, Avatar, Divider, Chip, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Tooltip } from "@mui/material";
+import { useState, useEffect } from "react";
+import {
+  Container,
+  Typography,
+  Grid,
+  Paper,
+  Box,
+  Avatar,
+  Divider,
+  Chip,
+  Button,
+  alpha,
+  useTheme,
+  LinearProgress,
+} from "@mui/material";
+import {
+  BookOpen,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  FileText,
+  MessageSquare,
+  TrendingUp,
+  AlertCircle,
+  ArrowRight,
+} from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import PersonIcon from "@mui/icons-material/Person";
-import AssignmentIcon from "@mui/icons-material/Assignment";
-import EventIcon from "@mui/icons-material/Event";
-import SearchIcon from "@mui/icons-material/Search";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import DownloadIcon from "@mui/icons-material/Download";
-import { generateReceiptPDF } from "../utils/pdfGenerator";
-import "../styles/Home.css"; // Reuse some styles
+import { db } from "../firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  limit,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
+import { Link } from "react-router-dom";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const [feeRecord, setFeeRecord] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const theme = useTheme();
+  const [stats, setStats] = useState({
+    attendance: 82,
+    pendingAssignments: 3,
+    unreadMessages: 2,
+    upcomingEvents: 1,
+  });
+  const [notices, setNotices] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
 
   useEffect(() => {
-    const userId = user?.id || JSON.parse(localStorage.getItem("user") || "{}")?.id;
-    if (userId && userId !== "undefined") {
-      // Fetch Fee Summary
-      const fetchFees = async () => {
-        try {
-          const q = query(collection(db, "fees"), where("user.id", "==", userId));
-          const querySnapshot = await getDocs(q);
-          if (!querySnapshot.empty) {
-            setFeeRecord({ id: querySnapshot.docs[0].id, ...querySnapshot.docs[0].data() });
-          }
-        } catch (err) {
-          console.error("Failed to fetch fees:", err);
-        }
-      };
+    if (!user) return;
 
-      // Fetch Transaction History
-      const fetchTransactions = async () => {
-        try {
-          const q = query(collection(db, "transactions"), where("user.id", "==", userId));
-          const querySnapshot = await getDocs(q);
-          const txList = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          setTransactions(txList);
-        } catch (err) {
-          console.error("Failed to fetch transactions:", err);
-        }
-      };
+    // Real-time notices
+    const noticeQuery = query(collection(db, "notices"), limit(3));
+    const unsubscribeNotices = onSnapshot(noticeQuery, (snap) => {
+      setNotices(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
 
-      fetchFees();
-      fetchTransactions();
-    }
+    // Assignments
+    const assignmentQuery = query(
+      collection(db, "assignments"),
+      where("department", "==", user.department),
+      where("year", "==", user.year),
+      limit(3)
+    );
+    const unsubscribeAssignments = onSnapshot(assignmentQuery, (snap) => {
+      setAssignments(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
+
+    return () => {
+      unsubscribeNotices();
+      unsubscribeAssignments();
+    };
   }, [user]);
 
+  const attendanceData = [
+    { name: "Math", value: 85 },
+    { name: "DS", value: 72 },
+    { name: "DLD", value: 90 },
+    { name: "OS", value: 78 },
+    { name: "Cloud", value: 88 },
+  ];
+
+  const StatCard = ({ title, value, icon: Icon, color }: any) => (
+    <Paper sx={{ p: 3, borderRadius: 4, position: 'relative', overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="body2" color="textSecondary" fontWeight={600}>{title}</Typography>
+          <Typography variant="h4" fontWeight={800} sx={{ mt: 1 }}>{value}</Typography>
+        </Box>
+        <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: alpha(color, 0.1), color: color }}>
+          <Icon size={24} />
+        </Box>
+      </Box>
+      <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: '100%', height: '4px', bgcolor: alpha(color, 0.2) }}>
+        <Box sx={{ width: typeof value === 'string' ? '100%' : `${value}%`, height: '100%', bgcolor: color }} />
+      </Box>
+    </Paper>
+  );
+
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }} className="fade-in">
-      <Typography variant="h4" sx={{ mb: 4, textAlign: "center", fontWeight: "bold", background: 'linear-gradient(135deg, #4F46E5, #0EA5E9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-        Student Portal
-      </Typography>
+    <Container maxWidth="lg">
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-1px' }}>
+          Welcome back, {user?.name?.split(' ')[0]}! 👋
+        </Typography>
+        <Typography variant="body1" color="textSecondary">
+          Here's what's happening on campus today.
+        </Typography>
+      </Box>
 
-      <Grid container spacing={4}>
-        {/* Profile Section */}
-        <Grid item xs={12} md={4}>
-          <Paper className="glass-panel" sx={{ p: 4, textAlign: "center", height: "100%" }}>
-            <Avatar sx={{ mx: "auto", mb: 2, background: 'linear-gradient(135deg, #4F46E5, #0EA5E9)', width: 80, height: 80, boxShadow: '0 4px 14px 0 rgba(79, 70, 229, 0.39)' }}>
-              <PersonIcon sx={{ fontSize: 40 }} />
-            </Avatar>
-            <Typography variant="h5" fontWeight="bold" sx={{ color: '#1E293B' }}>
-              {user?.name || "Student Name"}
-            </Typography>
-            <Typography sx={{ color: '#475569', mb: 2 }}>{user?.email}</Typography>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            <Box textAlign="left" sx={{ color: '#334155' }}>
-              <Typography sx={{ mb: 1 }}><strong>Department:</strong> {user?.department || "N/A"}</Typography>
-              <Typography sx={{ mb: 1 }}><strong>Year:</strong> {user?.year || "N/A"}</Typography>
-              <Typography><strong>Role:</strong> {user?.role}</Typography>
-            </Box>
-          </Paper>
+      {/* STATS GRID */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Attendance" value={`${stats.attendance}%`} icon={CheckCircle2} color={theme.palette.success.main} />
         </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Assignments" value={stats.pendingAssignments} icon={FileText} color={theme.palette.primary.main} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Messages" value={stats.unreadMessages} icon={MessageSquare} color={theme.palette.secondary.main} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Events" value={stats.upcomingEvents} icon={Calendar} color={theme.palette.warning.main} />
+        </Grid>
+      </Grid>
 
-        {/* Right Side: Quick Links & Finance */}
-        <Grid item xs={12} md={8}>
-          
-          {/* Financial Overview */}
-          <Paper className="glass-panel" sx={{ p: 3, mb: 4 }}>
-            <Box display="flex" alignItems="center" gap={2} mb={3}>
-              <Avatar sx={{ bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
-                <AccountBalanceWalletIcon />
-              </Avatar>
-              <Typography variant="h6" fontWeight="bold">Financial Overview</Typography>
+      <Grid container spacing={3}>
+        {/* LEFT COLUMN */}
+        <Grid item xs={12} lg={8}>
+          <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight={800}>Attendance Analytics</Typography>
+              <Button size="small" endIcon={<ArrowRight size={16} />}>Detailed Report</Button>
             </Box>
-            
-            {feeRecord ? (
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(79, 70, 229, 0.05)', border: '1px solid rgba(79, 70, 229, 0.1)' }}>
-                    <Typography variant="body2" color="textSecondary">Total Fees</Typography>
-                    <Typography variant="h5" fontWeight="bold">₹{feeRecord.totalFees}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                    <Typography variant="body2" color="textSecondary">Paid Amount</Typography>
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#10B981' }}>₹{feeRecord.paidFees}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(244, 63, 94, 0.05)', border: '1px solid rgba(244, 63, 94, 0.1)' }}>
-                    <Typography variant="body2" color="textSecondary">Outstanding</Typography>
-                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#F43F5E' }}>₹{feeRecord.remainingFees}</Typography>
-                  </Box>
-                </Grid>
-                <Grid item xs={12} mt={2} display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2" color="textSecondary" component="div">
-                    Status: <Chip label={feeRecord.status} color={feeRecord.status === 'Paid' ? 'success' : 'warning'} size="small" />
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Contact your department HOD to log payments.
-                  </Typography>
-                </Grid>
-              </Grid>
-            ) : (
-              <Box textAlign="center" py={3}>
-                <Typography color="textSecondary">No fee records found for your account.</Typography>
+            <Box sx={{ height: 300, width: '100%' }}>
+              <ResponsiveContainer>
+                <BarChart data={attendanceData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={alpha(theme.palette.divider, 0.5)} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontWeight: 600, fontSize: 12 }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontWeight: 600, fontSize: 12 }} />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
+                  />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    {attendanceData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.value < 75 ? theme.palette.error.main : theme.palette.primary.main} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+            {stats.attendance < 75 && (
+              <Box sx={{ mt: 2, p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.error.main, 0.05), display: 'flex', alignItems: 'center', gap: 2 }}>
+                <AlertCircle color={theme.palette.error.main} size={20} />
+                <Typography variant="body2" color="error.main" fontWeight={600}>
+                  Your attendance is below the 75% threshold. Please attend more classes to avoid eligibility issues.
+                </Typography>
               </Box>
             )}
           </Paper>
 
-          {/* Payment History Section */}
-          <Paper className="glass-panel" sx={{ p: 3, mb: 4 }}>
-            <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Payment History</Typography>
-            {transactions.length > 0 ? (
-              <TableContainer sx={{ borderRadius: '10px', border: '1px solid #e2e8f0', boxShadow: 'none' }}>
-                <Table size="small">
-                  <TableHead sx={{ bgcolor: '#f8fafc' }}>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Type</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Amount</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Method</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }}>Transaction ID</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold', color: '#475569' }} align="center">Receipt</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {transactions.map((t) => (
-                      <TableRow key={t.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                        <TableCell sx={{ color: '#475569' }}>{new Date(t.date).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={t.type} 
-                            size="small" 
-                            color={t.type === 'PAYMENT' ? 'success' : 'default'}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold', color: t.amount > 0 ? '#10B981' : 'inherit' }}>
-                          {t.amount > 0 ? `+ ₹${t.amount}` : '-'}
-                        </TableCell>
-                        <TableCell sx={{ color: '#475569' }}>{t.paymentMethod || 'Cash'}</TableCell>
-                        <TableCell sx={{ color: '#475569' }}>{t.referenceNumber ? t.referenceNumber : `TXN-${t.id}`}</TableCell>
-                        <TableCell align="center">
-                          {t.amount > 0 && (
-                            <Tooltip title="Download PDF Receipt">
-                              <IconButton color="primary" onClick={() => generateReceiptPDF(t, user, feeRecord)}>
-                                <DownloadIcon />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            ) : (
-              <Typography color="textSecondary" align="center" py={2}>No transactions recorded yet.</Typography>
-            )}
+          <Paper sx={{ p: 4, borderRadius: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h6" fontWeight={800}>Upcoming Assignments</Typography>
+              <Button component={Link} to="/assignments" size="small">View All</Button>
+            </Box>
+            <Grid container spacing={2}>
+              {assignments.map((asgn) => (
+                <Grid item xs={12} key={asgn.id}>
+                  <Box sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                      <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
+                        <FileText size={20} />
+                      </Avatar>
+                      <Box>
+                        <Typography variant="subtitle2" fontWeight={700}>{asgn.title}</Typography>
+                        <Typography variant="caption" color="textSecondary">{asgn.subject} • Due {asgn.dueDate}</Typography>
+                      </Box>
+                    </Box>
+                    <Button variant="outlined" size="small" component={Link} to="/assignments">Submit</Button>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* RIGHT COLUMN */}
+        <Grid item xs={12} lg={4}>
+          <Paper sx={{ p: 4, borderRadius: 4, mb: 3, bgcolor: theme.palette.primary.main, color: 'white' }}>
+            <Typography variant="h6" fontWeight={800} gutterBottom>Today's Schedule</Typography>
+            <Box sx={{ mt: 3 }}>
+              {[
+                { time: '09:00 AM', subject: 'Mathematics III', room: 'L-102' },
+                { time: '11:15 AM', subject: 'Data Structures', room: 'Lab-4' },
+                { time: '02:00 PM', subject: 'Operating Systems', room: 'L-201' },
+              ].map((item, i) => (
+                <Box key={i} sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                  <Typography variant="caption" sx={{ minWidth: 65, fontWeight: 700, opacity: 0.8 }}>{item.time}</Typography>
+                  <Box>
+                    <Typography variant="body2" fontWeight={700}>{item.subject}</Typography>
+                    <Typography variant="caption" sx={{ opacity: 0.7 }}>Room {item.room}</Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+            <Button fullWidth variant="contained" sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: alpha('#fff', 0.9) }, mt: 1 }}>
+              View Full Timetable
+            </Button>
           </Paper>
 
-          {/* Quick Links */}
-          <Grid container spacing={3}>
-            {/* Notices */}
-            <Grid item xs={12} sm={6}>
-              <Paper 
-                className="glass-panel"
-                sx={{ p: 3, textAlign: "center", cursor: "pointer", transition: "0.3s", "&:hover": { transform: "translateY(-5px)", boxShadow: '0 8px 30px rgba(0,0,0,0.1)' } }}
-                onClick={() => navigate("/notices")}
-              >
-                <AssignmentIcon sx={{ fontSize: 50, mb: 1, color: '#4F46E5' }} />
-                <Typography variant="h6" fontWeight="bold">Campus Notices</Typography>
-                <Typography variant="body2" color="textSecondary">View latest announcements</Typography>
-              </Paper>
-            </Grid>
-
-            {/* Events */}
-            <Grid item xs={12} sm={6}>
-              <Paper 
-                className="glass-panel"
-                sx={{ p: 3, textAlign: "center", cursor: "pointer", transition: "0.3s", "&:hover": { transform: "translateY(-5px)", boxShadow: '0 8px 30px rgba(0,0,0,0.1)' } }}
-                onClick={() => navigate("/events")}
-              >
-                <EventIcon sx={{ fontSize: 50, mb: 1, color: '#0EA5E9' }} />
-                <Typography variant="h6" fontWeight="bold">Upcoming Events</Typography>
-                <Typography variant="body2" color="textSecondary">Register and RSVP</Typography>
-              </Paper>
-            </Grid>
-
-            {/* Lost and Found */}
-            <Grid item xs={12} sm={6}>
-              <Paper 
-                className="glass-panel"
-                sx={{ p: 3, textAlign: "center", cursor: "pointer", transition: "0.3s", "&:hover": { transform: "translateY(-5px)", boxShadow: '0 8px 30px rgba(0,0,0,0.1)' } }}
-                onClick={() => navigate("/lostfound")}
-              >
-                <SearchIcon sx={{ fontSize: 50, mb: 1, color: '#F59E0B' }} />
-                <Typography variant="h6" fontWeight="bold">Lost & Found</Typography>
-                <Typography variant="body2" color="textSecondary">Report or claim items</Typography>
-              </Paper>
-            </Grid>
-
-            {/* Queries / Mentorship */}
-            <Grid item xs={12} sm={6}>
-              <Paper 
-                className="glass-panel"
-                sx={{ p: 3, textAlign: "center", cursor: "pointer", transition: "0.3s", "&:hover": { transform: "translateY(-5px)", boxShadow: '0 8px 30px rgba(0,0,0,0.1)' } }}
-                onClick={() => navigate("/queries")}
-              >
-                <PersonIcon sx={{ fontSize: 50, mb: 1, color: '#10B981' }} />
-                <Typography variant="h6" fontWeight="bold">Mentorship</Typography>
-                <Typography variant="body2" color="textSecondary">Ask questions to teachers</Typography>
-              </Paper>
-            </Grid>
-          </Grid>
-
+          <Paper sx={{ p: 4, borderRadius: 4 }}>
+            <Typography variant="h6" fontWeight={800} sx={{ mb: 3 }}>Recent Notices</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {notices.map((notice) => (
+                <Box key={notice.id}>
+                  <Chip label={notice.category || "General"} size="small" sx={{ mb: 1, fontWeight: 700, fontSize: '0.65rem' }} />
+                  <Typography variant="subtitle2" fontWeight={700} gutterBottom>{notice.title}</Typography>
+                  <Typography variant="caption" color="textSecondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {notice.content}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+            <Button fullWidth sx={{ mt: 3 }} component={Link} to="/notices">See All Notices</Button>
+          </Paper>
         </Grid>
       </Grid>
     </Container>

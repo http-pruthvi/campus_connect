@@ -1,209 +1,245 @@
-import { useEffect, useState } from "react";
-import { db } from "../firebase";
-import { collection, getDocs } from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
   Grid,
   Paper,
-  TextField,
-  MenuItem,
-  Chip,
   Box,
+  Avatar,
+  Divider,
+  Chip,
   Button,
+  alpha,
+  useTheme,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
-import CountUp from "react-countup";
-import "../styles/AdminDashboard.css";
+import {
+  Users,
+  ShieldCheck,
+  Building2,
+  Activity,
+  UserPlus,
+  Settings,
+  ArrowUpRight,
+  TrendingUp,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { db } from "../firebase";
+import {
+  collection,
+  query,
+  getDocs,
+  limit,
+  onSnapshot,
+} from "firebase/firestore";
+import { Link } from "react-router-dom";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 export default function AdminDashboard() {
-  const navigate = useNavigate();
-  const [users, setUsers] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
-  const [deptFilter, setDeptFilter] = useState("");
-
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "users"));
-        const usersList = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setUsers(usersList);
-      } catch (error) {
-        console.error("Failed to fetch users:", error);
-      }
-    };
-    fetchUsers();
-  }, []);
-
-  // ✅ FIX 1: SAFE NORMALIZATION (NO CRASH)
-  const normalizedUsers = users.map((u) => ({
-    ...u,
-    role: u.role ? u.role.toString().trim().toLowerCase() : "",
-    department: u.department ? u.department.toString().trim().toLowerCase() : "not assigned",
-  }));
-
-  // 🔍 FILTER LOGIC
-  const filteredUsers = normalizedUsers.filter((u) => {
-    const matchesSearch =
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase());
-
-    const matchesRole = roleFilter ? u.role === roleFilter : true;
-    const matchesDept = deptFilter ? u.department === deptFilter : true;
-
-    return matchesSearch && matchesRole && matchesDept;
+  const { user } = useAuth();
+  const theme = useTheme();
+  const [stats, setStats] = useState({
+    totalUsers: 450,
+    teachers: 42,
+    students: 380,
+    departments: 6,
   });
 
-  // 📊 FIX 2: STATS SHOULD USE ALL USERS (NOT FILTERED)
-  const stats = {
-    totalUsers: normalizedUsers.length,
-    totalHOD: normalizedUsers.filter((u) => u.role === "hod").length,
-    totalTeachers: normalizedUsers.filter((u) => u.role === "teacher").length,
-    totalStudents: normalizedUsers.filter((u) => u.role === "student").length,
-    totalPending: normalizedUsers.filter((u) => !u.approved).length,
-  };
-
-  const statCards = [
-    { label: "Total Users", count: stats.totalUsers, color: "#4f46e5" },
-    { label: "Total HODs", count: stats.totalHOD, color: "#16a34a" },
-    { label: "Total Teachers", count: stats.totalTeachers, color: "#f59e0b" },
-    { label: "Total Students", count: stats.totalStudents, color: "#e11d48" },
-    { label: "Pending Approval", count: stats.totalPending, color: "#0ea5e9" },
-    { label: "Fees Management", count: stats.totalStudents, color: "#8b5cf6", path: "/fees" },
+  const userData = [
+    { name: "Jan", users: 320 },
+    { name: "Feb", users: 340 },
+    { name: "Mar", users: 380 },
+    { name: "Apr", users: 410 },
+    { name: "May", users: 450 },
   ];
 
-  // 📌 FIX 3: REMOVE INVALID DEPARTMENT VALUES
-  const departments = [
-    ...new Set(
-      users
-        .map((u) => u.department)
-        .filter((dept) => dept && dept !== "")
-    ),
+  const deptData = [
+    { name: "Computer", value: 150 },
+    { name: "Mechanical", value: 80 },
+    { name: "Electrical", value: 70 },
+    { name: "Civil", value: 80 },
   ];
 
-  const clearFilters = () => {
-    setSearch("");
-    setRoleFilter("");
-    setDeptFilter("");
-  };
+  const COLORS = [theme.palette.primary.main, theme.palette.secondary.main, theme.palette.warning.main, theme.palette.error.main];
+
+  const StatCard = ({ title, value, icon: Icon, color }: any) => (
+    <Paper sx={{ p: 3, borderRadius: 4, height: '100%', border: `1px solid ${alpha(color, 0.1)}` }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: alpha(color, 0.1), color: color }}>
+          <Icon size={24} />
+        </Box>
+        <Box>
+          <Typography variant="h5" fontWeight={800}>{value}</Typography>
+          <Typography variant="caption" color="textSecondary" fontWeight={700}>{title}</Typography>
+        </Box>
+      </Box>
+    </Paper>
+  );
 
   return (
-    <Container sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" sx={{ mb: 3, textAlign: "center" }}>
-        Admin Dashboard
-      </Typography>
-
-      <TextField
-        fullWidth
-        label="Search users by name or email..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        sx={{ mb: 2 }}
-      />
-
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            select
-            fullWidth
-            label="Filter by Role"
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="hod">HOD</MenuItem>
-            <MenuItem value="teacher">Teacher</MenuItem>
-            <MenuItem value="student">Student</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
-          </TextField>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            select
-            fullWidth
-            label="Filter by Department"
-            value={deptFilter}
-            onChange={(e) => setDeptFilter(e.target.value)}
-          >
-            <MenuItem value="">All</MenuItem>
-            {departments.map((dept, i) => (
-              <MenuItem key={i} value={dept}>
-                {dept}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ mb: 2 }}>
-        {search && <Chip label={`Search: ${search}`} sx={{ mr: 1 }} />}
-        {roleFilter && <Chip label={`Role: ${roleFilter}`} sx={{ mr: 1 }} />}
-        {deptFilter && <Chip label={`Dept: ${deptFilter}`} sx={{ mr: 1 }} />}
-
-        {(search || roleFilter || deptFilter) && (
-          <Button size="small" color="error" onClick={clearFilters}>
-            Clear Filters
-          </Button>
-        )}
+    <Container maxWidth="lg">
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: '-1px' }}>
+            Administration Central
+          </Typography>
+          <Typography variant="body1" color="textSecondary">
+            Comprehensive system overview and user management
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button variant="outlined" startIcon={<Settings size={18} />}>System Logs</Button>
+          <Button variant="contained" startIcon={<UserPlus size={18} />}>Add Faculty</Button>
+        </Box>
       </Box>
 
-      <Grid container spacing={3}>
-        {statCards.map((card, i) => (
-          <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={i}>
-            <Paper
-              className="stats-card"
-              style={{
-                borderTop: `5px solid ${card.color}`,
-                textAlign: "center",
-                padding: "20px",
-                borderRadius: "12px",
-                cursor: card.path ? "pointer" : "default"
-              }}
-              elevation={6}
-              onClick={() => card.path && navigate(card.path)}
-            >
-              <Typography variant="subtitle1">{card.label}</Typography>
-              <Typography variant="h4" style={{ color: card.color }}>
-                <CountUp end={card.count} duration={1.5} />
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Total Network" value={stats.totalUsers} icon={Users} color={theme.palette.primary.main} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Total Faculty" value={stats.teachers} icon={ShieldCheck} color={theme.palette.success.main} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Total Students" value={stats.students} icon={TrendingUp} color={theme.palette.secondary.main} />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard title="Active Depts" value={stats.departments} icon={Building2} color={theme.palette.warning.main} />
+        </Grid>
       </Grid>
 
-      {(search || roleFilter || deptFilter) && (
-        <Grid container spacing={3} sx={{ mt: 4 }}>
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
-              <Grid size={{ xs: 12, sm: 6, md: 4 }} key={user.id}>
-                <Paper sx={{ p: 2, borderRadius: 3 }}>
-                  <Typography variant="h6">{user.name || "No Name"}</Typography>
-                  <Typography>{user.email}</Typography>
-                  <Typography>Role: {user.role}</Typography>
-                  <Typography>Dept: {user.department}</Typography>
-                  <Typography
-                    sx={{
-                      color: user.approved ? "green" : "red",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {user.approved ? "Approved" : "Pending"}
-                  </Typography>
-                </Paper>
-              </Grid>
-            ))
-          ) : (
-            <Typography sx={{ mt: 3, width: "100%", textAlign: "center" }}>
-              No users found
-            </Typography>
-          )}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
+            <Typography variant="h6" fontWeight={800} gutterBottom sx={{ mb: 3 }}>User Growth Analytics</Typography>
+            <Box sx={{ height: 350, width: '100%' }}>
+              <ResponsiveContainer>
+                <LineChart data={userData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={alpha(theme.palette.divider, 0.5)} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="users" stroke={theme.palette.primary.main} strokeWidth={4} dot={{ r: 6, fill: theme.palette.primary.main, strokeWidth: 3, stroke: '#fff' }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          </Paper>
+
+          <Paper sx={{ p: 4, borderRadius: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+              <Typography variant="h6" fontWeight={800}>Recent User Activity</Typography>
+              <Button size="small">Manage Users</Button>
+            </Box>
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>User</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Role</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} align="right">Activity</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {[
+                    { name: 'John Doe', role: 'STUDENT', status: 'Active', time: '2 mins ago' },
+                    { name: 'Dr. Smith', role: 'TEACHER', status: 'Active', time: '15 mins ago' },
+                    { name: 'Jane Wilson', role: 'HOD', status: 'Inactive', time: '1 hour ago' },
+                  ].map((row, i) => (
+                    <TableRow key={i} hover>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Avatar sx={{ width: 28, height: 28, fontSize: '0.7rem' }}>{row.name.charAt(0)}</Avatar>
+                          <Typography variant="body2" fontWeight={600}>{row.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell><Chip label={row.role} size="small" sx={{ fontSize: '0.6rem', fontWeight: 800 }} /></TableCell>
+                      <TableCell><Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: row.status === 'Active' ? 'success.main' : 'error.main', display: 'inline-block', mr: 1 }} /> {row.status}</TableCell>
+                      <TableCell align="right" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>{row.time}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
         </Grid>
-      )}
+
+        <Grid item xs={12} md={4}>
+          <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
+            <Typography variant="h6" fontWeight={800} gutterBottom>Department Distribution</Typography>
+            <Box sx={{ height: 280, width: '100%' }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={deptData}
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {deptData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+            <Box sx={{ mt: 2 }}>
+              {deptData.map((d, i) => (
+                <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length] }} />
+                    <Typography variant="caption" fontWeight={600}>{d.name}</Typography>
+                  </Box>
+                  <Typography variant="caption" fontWeight={700}>{d.value}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+
+          <Paper sx={{ p: 4, borderRadius: 4, bgcolor: theme.palette.primary.main, color: 'white' }}>
+            <Activity size={32} style={{ marginBottom: '16px' }} />
+            <Typography variant="h6" fontWeight={800}>Infrastructure Status</Typography>
+            <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600}>Database Usage</Typography>
+                  <Typography variant="caption" fontWeight={600}>42%</Typography>
+                </Box>
+                <Box sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}>
+                  <Box sx={{ width: '42%', height: '100%', borderRadius: 3, bgcolor: 'success.main' }} />
+                </Box>
+              </Box>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                  <Typography variant="caption" fontWeight={600}>Storage Usage</Typography>
+                  <Typography variant="caption" fontWeight={600}>18%</Typography>
+                </Box>
+                <Box sx={{ height: 6, borderRadius: 3, bgcolor: 'rgba(255,255,255,0.1)' }}>
+                  <Box sx={{ width: '18%', height: '100%', borderRadius: 3, bgcolor: 'white' }} />
+                </Box>
+              </Box>
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
     </Container>
   );
 }
