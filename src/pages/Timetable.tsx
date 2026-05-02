@@ -4,7 +4,7 @@ import {
   Typography,
   Box,
   Paper,
-  Grid,
+  Grid2 as Grid,
   Table,
   TableBody,
   TableCell,
@@ -27,6 +27,8 @@ import {
   useTheme,
   Tab,
   Tabs,
+  Card,
+  CardContent,
 } from "@mui/material";
 import {
   Calendar,
@@ -34,8 +36,9 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Save,
   Download,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
@@ -60,14 +63,6 @@ interface TimetableData {
 }
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const TIME_SLOTS = [
-  "09:00 AM - 10:00 AM",
-  "10:00 AM - 11:00 AM",
-  "11:15 AM - 12:15 PM",
-  "12:15 PM - 01:15 PM",
-  "02:00 PM - 03:00 PM",
-  "03:00 PM - 04:00 PM",
-];
 
 export default function Timetable() {
   const { user } = useAuth();
@@ -157,7 +152,7 @@ export default function Timetable() {
           {canEdit && (
             <FormControl size="small" sx={{ minWidth: 120 }}>
               <InputLabel>Year</InputLabel>
-              <Select value={selectedYear} label="Year" onChange={e => setSelectedYear(e.target.value)}>
+              <Select value={selectedYear} label="Year" onChange={e => setSelectedYear(e.target.value as string)}>
                 <MenuItem value="1st">1st Year</MenuItem>
                 <MenuItem value="2nd">2nd Year</MenuItem>
                 <MenuItem value="3rd">3rd Year</MenuItem>
@@ -192,7 +187,7 @@ export default function Timetable() {
               timetable[DAYS[activeTab]]
                 .sort((a, b) => a.startTime.localeCompare(b.startTime))
                 .map((slot) => (
-                <Grid item xs={12} sm={6} md={4} key={slot.id}>
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={slot.id}>
                   <Card sx={{ 
                     position: 'relative', 
                     bgcolor: alpha(theme.palette.primary.main, 0.01),
@@ -225,7 +220,7 @@ export default function Timetable() {
                 </Grid>
               ))
             ) : (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Box sx={{ textAlign: 'center', py: 8 }}>
                   <Calendar size={48} color={theme.palette.text.disabled} style={{ marginBottom: '16px' }} />
                   <Typography variant="h6" color="textSecondary">No classes scheduled for {DAYS[activeTab]}.</Typography>
@@ -244,16 +239,16 @@ export default function Timetable() {
             )}
             
             {canEdit && timetable[DAYS[activeTab]]?.length > 0 && (
-              <Grid item xs={12} sm={6} md={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Button
                   fullWidth
-                  variant="dashed"
+                  variant="outlined"
                   sx={{ 
                     height: '100%', minHeight: 140, 
-                    border: `2px dashed ${theme.palette.divider}`,
+                    borderStyle: 'dashed',
                     borderRadius: 4,
                     color: 'text.secondary',
-                    '&:hover': { border: `2px dashed ${theme.palette.primary.main}`, color: 'primary.main' }
+                    '&:hover': { borderStyle: 'dashed', color: 'primary.main' }
                   }}
                   onClick={() => { setEditingDay(DAYS[activeTab]); setOpenAdd(true); }}
                 >
@@ -290,5 +285,3 @@ export default function Timetable() {
     </Container>
   );
 }
-
-import { Card, CardContent } from "@mui/material";

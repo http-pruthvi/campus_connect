@@ -5,7 +5,7 @@ import {
   Box,
   Paper,
   Button,
-  Grid,
+  Grid2 as Grid,
   Card,
   CardContent,
   CardActions,
@@ -26,13 +26,8 @@ import {
 import {
   Plus,
   FileText,
-  Calendar,
   Upload,
-  CheckCircle2,
   Clock,
-  ExternalLink,
-  MoreVertical,
-  Trash2,
   Users,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -45,8 +40,6 @@ import {
   where,
   orderBy,
   onSnapshot,
-  deleteDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -105,9 +98,10 @@ export default function Assignments() {
   const isTeacher = role === "TEACHER" || role === "HOD" || role === "ADMIN";
 
   useEffect(() => {
+    if (!user) return;
     const q = isTeacher 
-      ? query(collection(db, "assignments"), where("teacherId", "==", user?.id), orderBy("createdAt", "desc"))
-      : query(collection(db, "assignments"), where("department", "==", user?.department), where("year", "==", user?.year), orderBy("createdAt", "desc"));
+      ? query(collection(db, "assignments"), where("teacherId", "==", user.id), orderBy("createdAt", "desc"))
+      : query(collection(db, "assignments"), where("department", "==", user.department), where("year", "==", user.year), orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setAssignments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Assignment)));
@@ -115,7 +109,7 @@ export default function Assignments() {
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, isTeacher]);
 
   const handleCreateAssignment = async () => {
     if (!form.title || !form.dueDate || !form.subject) return;
@@ -200,7 +194,7 @@ export default function Assignments() {
       ) : (
         <Grid container spacing={3}>
           {assignments.length === 0 ? (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Paper sx={{ p: 8, textAlign: 'center', borderRadius: 4 }}>
                 <FileText size={48} color={theme.palette.text.disabled} style={{ marginBottom: '16px' }} />
                 <Typography variant="h6" color="textSecondary">No assignments found.</Typography>
@@ -209,7 +203,7 @@ export default function Assignments() {
             </Grid>
           ) : (
             assignments.map((assignment) => (
-              <Grid item xs={12} md={6} key={assignment.id}>
+              <Grid size={{ xs: 12, md: 6 }} key={assignment.id}>
                 <Card sx={{ 
                   height: '100%', 
                   display: 'flex', 
@@ -293,21 +287,21 @@ export default function Assignments() {
         <DialogTitle sx={{ fontWeight: 800 }}>Create New Assignment</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField 
                 fullWidth label="Assignment Title" 
                 value={form.title} 
                 onChange={e => setForm({...form, title: e.target.value})} 
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField 
                 fullWidth label="Subject" 
                 value={form.subject} 
                 onChange={e => setForm({...form, subject: e.target.value})} 
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField 
                 fullWidth label="Due Date" type="date"
                 InputLabelProps={{ shrink: true }}
@@ -315,7 +309,7 @@ export default function Assignments() {
                 onChange={e => setForm({...form, dueDate: e.target.value})} 
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField 
                 fullWidth label="Description" multiline rows={4}
                 value={form.description} 

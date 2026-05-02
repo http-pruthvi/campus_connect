@@ -4,11 +4,7 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler']],
-      },
-    }),
+    react(),
   ],
   server: {
     watch: {
@@ -16,7 +12,7 @@ export default defineConfig({
       interval: 1000,
     },
     hmr: {
-      overlay: false,
+      overlay: true,
     }
   }
 })

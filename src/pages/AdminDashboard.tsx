@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Grid,
+  Grid2 as Grid,
   Paper,
   Box,
   Avatar,
@@ -110,22 +110,22 @@ export default function AdminDashboard() {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Total Network" value={stats.totalUsers} icon={Users} color={theme.palette.primary.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Total Faculty" value={stats.teachers} icon={ShieldCheck} color={theme.palette.success.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Total Students" value={stats.students} icon={TrendingUp} color={theme.palette.secondary.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Active Depts" value={stats.departments} icon={Building2} color={theme.palette.warning.main} />
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Typography variant="h6" fontWeight={800} gutterBottom sx={{ mb: 3 }}>User Growth Analytics</Typography>
             <Box sx={{ height: 350, width: '100%' }}>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Typography variant="h6" fontWeight={800} gutterBottom>Department Distribution</Typography>
             <Box sx={{ height: 280, width: '100%' }}>

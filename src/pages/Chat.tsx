@@ -263,6 +263,3 @@ export default function Chat() {
     </Container>
   );
 }
-
-import { MessageSquare } from "lucide-react";
-import { CardContent } from "@mui/material"; // Clean up needed

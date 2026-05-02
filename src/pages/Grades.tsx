@@ -4,7 +4,7 @@ import {
   Typography,
   Box,
   Paper,
-  Grid,
+  Grid2 as Grid,
   Table,
   TableBody,
   TableCell,
@@ -30,15 +30,8 @@ import {
   useTheme,
 } from "@mui/material";
 import {
-  GraduationCap,
   Download,
   Plus,
-  Search,
-  Filter,
-  Save,
-  CheckCircle2,
-  AlertCircle,
-  FileBarChart,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
@@ -51,7 +44,6 @@ import {
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { generateReceiptPDF } from "../utils/pdfGenerator"; // We'll repurpose/rename this later
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -187,7 +179,7 @@ export default function Grades() {
         ['Total Score', '100', record.total],
       ],
       theme: 'grid',
-      headStyles: { fillStyle: theme.palette.primary.main }
+      headStyles: { fillColor: theme.palette.primary.main }
     });
 
     const finalY = (doc as any).lastAutoTable.finalY || 120;
@@ -220,19 +212,19 @@ export default function Grades() {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <FormControl fullWidth>
             <InputLabel>Subject</InputLabel>
-            <Select value={selectedSubject} label="Subject" onChange={e => setSelectedSubject(e.target.value)}>
+            <Select value={selectedSubject} label="Subject" onChange={e => setSelectedSubject(e.target.value as string)}>
               {subjects.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
             </Select>
           </FormControl>
         </Grid>
         {isTeacher && (
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel>Target Year</InputLabel>
-              <Select value={selectedYear} label="Target Year" onChange={e => setSelectedYear(e.target.value)}>
+              <Select value={selectedYear} label="Target Year" onChange={e => setSelectedYear(e.target.value as string)}>
                 <MenuItem value="1st">1st Year</MenuItem>
                 <MenuItem value="2nd">2nd Year</MenuItem>
                 <MenuItem value="3rd">3rd Year</MenuItem>
@@ -303,33 +295,33 @@ export default function Grades() {
         <DialogTitle sx={{ fontWeight: 800 }}>Record Student Marks</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <FormControl fullWidth>
                 <InputLabel>Select Student</InputLabel>
                 <Select 
                   value={form.studentId} 
                   label="Select Student"
-                  onChange={e => setForm({...form, studentId: e.target.value})}
+                  onChange={e => setForm({...form, studentId: e.target.value as string})}
                 >
                   {students.map(s => <MenuItem key={s.id} value={s.id}>{s.name} ({s.email})</MenuItem>)}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField 
                 fullWidth label="Internal (20)" type="number"
                 value={form.internal} 
                 onChange={e => setForm({...form, internal: Number(e.target.value)})} 
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField 
                 fullWidth label="Mid-Sem (30)" type="number"
                 value={form.midSem} 
                 onChange={e => setForm({...form, midSem: Number(e.target.value)})} 
               />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField 
                 fullWidth label="End-Sem (50)" type="number"
                 value={form.endSem} 

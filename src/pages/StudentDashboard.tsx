@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Grid,
+  Grid2 as Grid,
   Paper,
   Box,
   Avatar,
@@ -123,23 +123,23 @@ export default function StudentDashboard() {
 
       {/* STATS GRID */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Attendance" value={`${stats.attendance}%`} icon={CheckCircle2} color={theme.palette.success.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Assignments" value={stats.pendingAssignments} icon={FileText} color={theme.palette.primary.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Messages" value={stats.unreadMessages} icon={MessageSquare} color={theme.palette.secondary.main} />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Events" value={stats.upcomingEvents} icon={Calendar} color={theme.palette.warning.main} />
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
         {/* LEFT COLUMN */}
-        <Grid item xs={12} lg={8}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography variant="h6" fontWeight={800}>Attendance Analytics</Typography>
@@ -179,7 +179,7 @@ export default function StudentDashboard() {
             </Box>
             <Grid container spacing={2}>
               {assignments.map((asgn) => (
-                <Grid item xs={12} key={asgn.id}>
+                <Grid size={{ xs: 12 }} key={asgn.id}>
                   <Box sx={{ p: 2, borderRadius: 3, border: `1px solid ${theme.palette.divider}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                       <Avatar sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), color: theme.palette.primary.main }}>
@@ -199,7 +199,7 @@ export default function StudentDashboard() {
         </Grid>
 
         {/* RIGHT COLUMN */}
-        <Grid item xs={12} lg={4}>
+        <Grid size={{ xs: 12, lg: 4 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3, bgcolor: theme.palette.primary.main, color: 'white' }}>
             <Typography variant="h6" fontWeight={800} gutterBottom>Today's Schedule</Typography>
             <Box sx={{ mt: 3 }}>

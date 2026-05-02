@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Grid,
+  Grid2 as Grid,
   Paper,
   Box,
   Avatar,
@@ -95,22 +95,22 @@ export default function TeacherDashboard() {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Total Students" value={stats.totalStudents} icon={Users} color={theme.palette.primary.main} trend="+5%" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Pending Reviews" value={stats.pendingReviews} icon={FileCheck} color={theme.palette.error.main} trend="High" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="Today's Classes" value={stats.activeClasses} icon={Calendar} color={theme.palette.success.main} trend="Full" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="New Queries" value={stats.newQueries} icon={MessageSquare} color={theme.palette.secondary.main} trend="+2" />
         </Grid>
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               <Typography variant="h6" fontWeight={800}>Average Class Performance</Typography>
@@ -155,7 +155,7 @@ export default function TeacherDashboard() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Typography variant="h6" fontWeight={800} gutterBottom>Today's Lectures</Typography>
             <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

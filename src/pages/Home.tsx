@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Typography, Grid, Paper, Button, Box, Avatar } from "@mui/material";
+import { Container, Typography, Grid2 as Grid, Paper, Button, Box, Avatar, useTheme } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
@@ -10,6 +10,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import "../styles/Home.css";
 
 export default function Home() {
+  const theme = useTheme();
   const [userName, setUserName] = useState("");
   const [notifications, setNotifications] = useState({
     notices: false,
@@ -19,8 +20,15 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser?.name) setUserName(storedUser.name);
+    const storedUserStr = localStorage.getItem("user");
+    if (storedUserStr) {
+      try {
+        const storedUser = JSON.parse(storedUserStr);
+        if (storedUser?.name) setUserName(storedUser.name);
+      } catch (e) {
+        console.error("Failed to parse user from localStorage");
+      }
+    }
 
     const checkUpdates = (collectionName, key) => {
       const q = query(
@@ -64,7 +72,7 @@ export default function Home() {
       path: "/notices",
       desc: "Stay updated with the latest announcements and notices.",
       btnText: "View Notices",
-      icon: <AssignmentIcon sx={{ fontSize: 40, color: '#4F46E5' }} />,
+      icon: <AssignmentIcon sx={{ fontSize: 40, color: theme.palette.primary.main }} />,
       delayClass: "delay-1",
       hasNotification: notifications.notices
     },
@@ -74,7 +82,7 @@ export default function Home() {
       path: "/events",
       desc: "Discover upcoming workshops, seminars, and cultural events.",
       btnText: "View Events",
-      icon: <EventIcon sx={{ fontSize: 40, color: '#0EA5E9' }} />,
+      icon: <EventIcon sx={{ fontSize: 40, color: theme.palette.secondary.main }} />,
       delayClass: "delay-2",
       hasNotification: false
     },
@@ -103,7 +111,7 @@ export default function Home() {
   return (
     <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }} className="fade-in">
       <Box sx={{ textAlign: 'center', mb: 6 }} className="slide-down">
-        <Typography variant="h3" fontWeight="bold" sx={{ mb: 2, background: 'linear-gradient(135deg, #4F46E5, #0EA5E9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <Typography variant="h3" fontWeight="bold" sx={{ mb: 2, background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           {userName ? `Welcome, ${userName}` : "Welcome to Campus Connect"}
         </Typography>
         <Typography variant="h6" color="textSecondary">
@@ -113,7 +121,7 @@ export default function Home() {
 
       <Grid container spacing={4} justifyContent="center">
         {sections.map((sec) => (
-          <Grid item xs={12} sm={6} md={3} key={sec.id}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={sec.id}>
             <Paper 
               className={`slide-up ${sec.delayClass}`}
               sx={{ 
@@ -125,6 +133,7 @@ export default function Home() {
                 textAlign: 'center',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
+                borderRadius: 4,
                 '&:hover': {
                   transform: 'translateY(-8px)',
                   boxShadow: '0 12px 30px rgba(0,0,0,0.1)',
@@ -132,12 +141,12 @@ export default function Home() {
               }}
               onClick={() => handleNavigation(sec.id, sec.path)}
             >
-              <Avatar sx={{ width: 80, height: 80, mb: 3, bgcolor: '#f8fafc', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <Avatar sx={{ width: 80, height: 80, mb: 3, bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : '#f8fafc', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
                 {sec.icon}
               </Avatar>
               <Typography variant="h5" fontWeight="bold" sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {sec.title}
-                {sec.hasNotification && <span className="notification-dot" />}
+                {sec.hasNotification && <Box sx={{ width: 8, height: 8, bgcolor: 'error.main', borderRadius: '50%', ml: 1 }} />}
               </Typography>
               <Typography variant="body1" color="textSecondary" sx={{ mb: 4, flexGrow: 1 }}>
                 {sec.desc}
@@ -146,6 +155,7 @@ export default function Home() {
                 variant="contained" 
                 fullWidth 
                 size="large"
+                sx={{ borderRadius: 2 }}
                 onClick={(e) => {
                   e.stopPropagation();
                   handleNavigation(sec.id, sec.path);

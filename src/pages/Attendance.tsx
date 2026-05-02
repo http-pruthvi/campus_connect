@@ -4,7 +4,7 @@ import {
   Typography,
   Box,
   Paper,
-  Grid,
+  Grid2 as Grid,
   Table,
   TableBody,
   TableCell,
@@ -199,10 +199,10 @@ export default function Attendance() {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth>
             <InputLabel>Year</InputLabel>
-            <Select value={selectedYear} label="Year" onChange={(e) => setSelectedYear(e.target.value)}>
+            <Select value={selectedYear} label="Year" onChange={(e) => setSelectedYear(e.target.value as string)}>
               <MenuItem value="1st">1st Year</MenuItem>
               <MenuItem value="2nd">2nd Year</MenuItem>
               <MenuItem value="3rd">3rd Year</MenuItem>
@@ -210,15 +210,15 @@ export default function Attendance() {
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <FormControl fullWidth>
             <InputLabel>Subject</InputLabel>
-            <Select value={selectedSubject} label="Subject" onChange={(e) => setSelectedSubject(e.target.value)}>
+            <Select value={selectedSubject} label="Subject" onChange={(e) => setSelectedSubject(e.target.value as string)}>
               {subjects.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
             </Select>
           </FormControl>
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <TextField
             fullWidth
             label="Date"
@@ -228,7 +228,7 @@ export default function Attendance() {
             InputLabelProps={{ shrink: true }}
           />
         </Grid>
-        <Grid item xs={12} md={3}>
+        <Grid size={{ xs: 12, md: 3 }}>
            <Box sx={{ p: 2, bgcolor: alpha(theme.palette.primary.main, 0.05), borderRadius: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <Info size={18} color={theme.palette.primary.main} />
               <Typography variant="caption" fontWeight={600}>

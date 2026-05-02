@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import {
   Container,
   Typography,
-  Grid,
+  Grid2 as Grid,
   Paper,
   Box,
   Avatar,
@@ -72,7 +72,7 @@ export default function HodDashboard() {
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {stats.map((s, i) => (
-          <Grid item xs={12} sm={6} md={3} key={i}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={i}>
             <Paper sx={{ p: 3, borderRadius: 4, height: '100%' }}>
               <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha(s.color, 0.1), color: s.color, width: 'fit-content', mb: 2 }}>
                 <s.icon size={24} />
@@ -85,7 +85,7 @@ export default function HodDashboard() {
       </Grid>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Typography variant="h6" fontWeight={800} gutterBottom sx={{ mb: 3 }}>Departmental Academic Performance</Typography>
             <Box sx={{ height: 350, width: '100%' }}>
@@ -102,7 +102,7 @@ export default function HodDashboard() {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Paper sx={{ p: 4, borderRadius: 4, mb: 3 }}>
             <Typography variant="h6" fontWeight={800} gutterBottom>Faculty Overview</Typography>
             <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 3 }}>

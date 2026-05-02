@@ -2,7 +2,6 @@ import { Box, useTheme, useMediaQuery } from "@mui/material";
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
-import PageTransition from "./PageTransition";
 
 interface MainLayoutProps {
   mode: 'light' | 'dark';
@@ -26,16 +25,10 @@ export default function MainLayout({ mode, toggleColorMode }: MainLayoutProps) {
           p: { xs: 2, sm: 3, md: 4 },
           width: { xs: '100%', md: `calc(100% - 280px)` },
           minHeight: '100vh',
-          pt: { xs: 10, md: 12 }, // Space for fixed navbar
-          transition: theme.transitions.create(['margin', 'width'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
+          pt: 10,
         }}
       >
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
+        <Outlet />
       </Box>
     </Box>
   );
