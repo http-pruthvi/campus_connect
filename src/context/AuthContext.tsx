@@ -15,12 +15,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Clear previous doc listener if any
         if (unsubscribeDoc) unsubscribeDoc();
 
         const userRef = doc(db, "users", firebaseUser.uid);
+        
+        // Timeout to stop loading if profile never appears
+        const profileTimeout = setTimeout(() => {
+          setLoading(false);
+          console.warn("Profile fetch timed out for:", firebaseUser.email);
+        }, 8000);
+
         unsubscribeDoc = onSnapshot(userRef, (userDoc) => {
           if (userDoc.exists()) {
+            clearTimeout(profileTimeout);
             const userData = userDoc.data();
             setUser({
               id: firebaseUser.uid,
@@ -31,12 +38,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               year: userData.year,
               financeAccess: userData.financeAccess,
             } as User);
+            setLoading(false);
           } else {
-            console.error("User profile not found");
-            setUser(null);
+            console.warn("Waiting for user profile doc...");
           }
-          setLoading(false);
         }, (error) => {
+          clearTimeout(profileTimeout);
           console.error("Profile listener error:", error);
           setLoading(false);
         });

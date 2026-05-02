@@ -34,6 +34,7 @@ import { Link, useNavigate, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useNotifications } from "../context/NotificationContext";
 import { useState, useEffect } from "react";
+import { auth, logout } from "../firebase";
 
 import { styled } from "@mui/material/styles";
 
@@ -149,11 +150,13 @@ export default function Navbar({ mode, toggleColorMode, onToggleSidebar, isSideb
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleLogout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/");
+    } catch (error) {
+      console.error("Logout failed", error);
+    }
   };
 
   const getPageTitle = () => {

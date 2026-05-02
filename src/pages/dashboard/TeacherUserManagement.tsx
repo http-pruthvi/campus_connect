@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import PersonIcon from '@mui/icons-material/Person';
 import SearchIcon from "@mui/icons-material/Search";
-import "../../../styles/TeacherDashboard.css";
+import "../../styles/TeacherDashboard.css";
 
 function TabPanel({ children, value, index }: any) {
   return <div hidden={value !== index}>{value === index && <Box sx={{ mt: 2 }}>{children}</Box>}</div>;

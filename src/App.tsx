@@ -71,9 +71,8 @@ export default function App() {
 
               {/* ================= AUTHENTICATED (WITH LAYOUT) ================= */}
               <Route element={<MainLayout mode={mode} toggleColorMode={toggleColorMode} />}>
-                <Route path="/home" element={<Home />} />
-                
                 <Route element={<ProtectedRoute allowedRoles={["ADMIN", "HOD", "TEACHER", "STUDENT"]} />}>
+                  <Route path="/home" element={<Home />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/notices" element={<NoticeBoard />} />
                   <Route path="/lostfound" element={<LostAndFound />} />

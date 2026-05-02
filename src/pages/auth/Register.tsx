@@ -93,7 +93,8 @@ export default function Register() {
         createdAt: new Date().toISOString(),
       });
 
-      navigate("/home");
+      // The AuthContext will pick up the change and navigate to /home automatically
+      console.log("Registration successful, waiting for profile sync...");
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Registration failed");

@@ -42,9 +42,8 @@ const handleLogin = async () => {
     const firebaseUser = userCredential.user;
 
     // The AuthContext will pick up the change and fetch the user profile from Firestore
-    // We can just wait for the context to update, but to ensure smooth navigation:
-    // We'll navigate to /home first, and the ProtectedRoutes will handle redirection if needed.
-    navigate("/home");
+    // The useEffect above will handle the navigation once the user is fully loaded.
+    console.log("Login successful, waiting for profile...");
 
   } catch (err: any) {
     console.error(err);

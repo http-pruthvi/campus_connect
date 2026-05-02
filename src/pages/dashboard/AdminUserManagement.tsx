@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
-import "../../../styles/AdminDashboard.css";
+import "../../styles/AdminDashboard.css";
 
 interface User {
   id: string;

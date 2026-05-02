@@ -12,7 +12,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import SearchIcon from "@mui/icons-material/Search";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import "../../../styles/HODDashboard.css";
+import "../../styles/HODDashboard.css";
 
 interface User {
   id: string;
