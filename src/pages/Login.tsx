@@ -7,9 +7,10 @@ import {
   Button,
   Alert,
   CircularProgress,
+  Box,
 } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import "../styles/globals.css";
 import "../styles/Login.css";
 
