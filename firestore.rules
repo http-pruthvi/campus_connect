@@ -1,0 +1,132 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+
+    function isHOD() {
+      return isSignedIn() && getUserRole() == 'hod';
+    }
+
+    function isTeacher() {
+      return isSignedIn() && getUserRole() == 'teacher';
+    }
+
+    function isStaff() {
+      return isAdmin() || isHOD() || isTeacher();
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // ── Users ────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Anyone signed in can read any user profile (for directory, etc.)
+      allow read: if isSignedIn();
+      // Users can create their own profile on registration
+      allow create: if isOwner(userId);
+      // Users can update their own profile; admins can update anyone
+      allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete user profiles
+      allow delete: if isAdmin();
+
+      // Notifications sub-collection: private to the user
+      match /notifications/{notifId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // ── Notices ──────────────────────────────────────────────────────────────
+    match /notices/{noticeId} {
+      // All signed-in users can read notices
+      allow read: if isSignedIn();
+      // Only staff (admin, hod, teacher) can create/update/delete
+      allow create, update, delete: if isStaff();
+    }
+
+    // ── Events ───────────────────────────────────────────────────────────────
+    match /events/{eventId} {
+      // All signed-in users can read events
+      allow read: if isSignedIn();
+      // Only staff can create/update/delete events
+      allow create, update, delete: if isStaff();
+
+      // Registrations sub-collection
+      match /registrations/{regId} {
+        // All signed-in users can read registrations
+        allow read: if isSignedIn();
+        // Users can register themselves
+        allow create: if isSignedIn();
+        // Only the registrant or staff can update/delete
+        allow update, delete: if isOwner(resource.data.uid) || isStaff();
+      }
+    }
+
+    // ── Questions (Q&A) ──────────────────────────────────────────────────────
+    match /questions/{questionId} {
+      // All signed-in users can read questions
+      allow read: if isSignedIn();
+      // Any signed-in user can create a question
+      allow create: if isSignedIn();
+      // Author or staff can update (mark answered, edit)
+      allow update: if isOwner(resource.data.authorId) || isStaff();
+      // Author or admin can delete
+      allow delete: if isOwner(resource.data.authorId) || isAdmin();
+
+      // Answers sub-collection
+      match /answers/{answerId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+      }
+    }
+
+    // ── Queries (Support Tickets) ────────────────────────────────────────────
+    match /queries/{queryId} {
+      // Staff can read all; students can read their own
+      allow read: if isStaff() || isOwner(resource.data.studentId);
+      // Any signed-in user can create a ticket
+      allow create: if isSignedIn();
+      // Staff can update status; student can update own ticket
+      allow update: if isStaff() || isOwner(resource.data.studentId);
+      // Admin or ticket owner can delete
+      allow delete: if isAdmin() || isOwner(resource.data.studentId);
+
+      // Replies sub-collection
+      match /replies/{replyId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn();
+        allow update, delete: if isOwner(resource.data.authorId) || isAdmin();
+      }
+    }
+
+    // ── Lost & Found ─────────────────────────────────────────────────────────
+    match /lostfound/{itemId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.postedBy) || isAdmin();
+      allow delete: if isOwner(resource.data.postedBy) || isAdmin();
+    }
+
+    // ── Fees ─────────────────────────────────────────────────────────────────
+    match /fees/{feeId} {
+      // Staff can read all; students can read their own
+      allow read: if isStaff() || isOwner(resource.data.studentId);
+      // Only admin/hod can create/update/delete fee records
+      allow create, update, delete: if isAdmin() || isHOD();
+    }
+  }
+}
